@@ -1,18 +1,18 @@
 from flask import Flask
-from .config import Config
-from .extensions import mongo, bcrypt, jwt
-from .routes.health_routes import health_bp
+from app.modules.auth.routes import auth_bp
+from app.core.config import Config
+from app.core.extensions import mongo, bcrypt, jwt
+from app.modules.system.routes import system_bp
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Initialize extensions
     mongo.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
 
-    # Register blueprints
-    app.register_blueprint(health_bp)
+    app.register_blueprint(system_bp)
+    app.register_blueprint(auth_bp)
 
     return app
