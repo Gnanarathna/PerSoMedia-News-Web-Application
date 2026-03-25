@@ -8,3 +8,4 @@ class Config:
     MONGO_URI = os.getenv("MONGO_URI")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
