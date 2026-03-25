@@ -1,14 +1,13 @@
-from flask import jsonify
+from flask import current_app
 from bson import ObjectId
 from app.core.extensions import mongo
 from .events import send_notification
+from app.core.response import success_response, error_response
 
 
 def trigger_test_notification():
     send_notification("This is a test notification from PerSoMedia News")
-    return jsonify({
-        "message": "Test notification sent successfully"
-    }), 200
+    return success_response(None, "Test notification sent successfully", 200)
 
 
 def get_notifications():
@@ -20,12 +19,11 @@ def get_notifications():
         for notification in notifications:
             notification["_id"] = str(notification["_id"])
 
-        return jsonify(notifications), 200
+        return success_response(notifications, "Notifications fetched successfully", 200)
 
-    except Exception:
-        return jsonify({
-            "error": "Failed to fetch notifications"
-        }), 500
+    except Exception as e:
+        current_app.logger.exception(f"Failed to fetch notifications: {str(e)}")
+        return error_response("Failed to fetch notifications", 500)
 
 
 def mark_notification_as_read(notification_id):
@@ -36,15 +34,10 @@ def mark_notification_as_read(notification_id):
         )
 
         if result.matched_count == 0:
-            return jsonify({
-                "error": "Notification not found"
-            }), 404
+            return error_response("Notification not found", 404)
 
-        return jsonify({
-            "message": "Notification marked as read"
-        }), 200
+        return success_response(None, "Notification marked as read", 200)
 
-    except Exception:
-        return jsonify({
-            "error": "Failed to update notification"
-        }), 500
+    except Exception as e:
+        current_app.logger.exception(f"Failed to update notification: {str(e)}")
+        return error_response("Failed to update notification", 500)
