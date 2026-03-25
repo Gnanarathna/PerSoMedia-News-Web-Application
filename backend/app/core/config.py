@@ -9,3 +9,5 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+    NEWS_API_KEY = os.getenv("NEWS_API_KEY")
