@@ -1,10 +1,30 @@
-from flask import request, jsonify
+from flask import request, current_app
 from app.modules.news.service import NewsService
 from .service import get_platform_news
 from app.core.extensions import mongo
 from bson import ObjectId
 from app.modules.fake_detection.service import analyze_news_service
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.core.response import success_response, error_response
+
+
+def _service_response(response, status):
+    if status >= 400:
+        return error_response(
+            response.get("error") or response.get("message", "Request failed"),
+            status,
+        )
+
+    message = response.get("message", "Success")
+    data = response.get("items")
+    if data is None:
+        data = response.get("result")
+    if data is None:
+        data = {k: v for k, v in response.items() if k != "message"}
+        if not data:
+            data = None
+
+    return success_response(data, message, status)
 
 
 class NewsController:
@@ -15,10 +35,14 @@ class NewsController:
 
         allowed = ["youtube", "x", "facebook", "instagram", "tiktok"]
         if platform not in allowed:
-            return jsonify({"error": "Invalid platform"}), 400
+            return error_response("Invalid platform", 400)
 
         data = NewsService.get_trending(platform)
-        return jsonify({"platform": platform, "items": data}), 200
+        return success_response(
+            {"platform": platform, "items": data},
+            "Trending news fetched successfully",
+            200,
+        )
 
     @staticmethod
     def search():
@@ -27,13 +51,17 @@ class NewsController:
 
         allowed = ["youtube", "x", "facebook", "instagram", "tiktok"]
         if platform not in allowed:
-            return jsonify({"error": "Invalid platform"}), 400
+            return error_response("Invalid platform", 400)
 
         if not query.strip():
-            return jsonify({"error": "Search query (q) is required"}), 400
+            return error_response("Search query (q) is required", 400)
 
         results = NewsService.search(platform, query)
-        return jsonify({"platform": platform, "q": query, "items": results}), 200
+        return success_response(
+            {"platform": platform, "q": query, "items": results},
+            "Search results fetched successfully",
+            200,
+        )
 
     @staticmethod
     @jwt_required()
@@ -41,21 +69,21 @@ class NewsController:
         user_id = get_jwt_identity()
         data = request.get_json()
         response, status = NewsService.add_to_watch_later(user_id, data)
-        return jsonify(response), status
+        return _service_response(response, status)
 
     @staticmethod
     @jwt_required()
     def remove_watch_later(news_id):
         user_id = get_jwt_identity()
         response, status = NewsService.remove_from_watch_later(user_id, news_id)
-        return jsonify(response), status
+        return _service_response(response, status)
 
     @staticmethod
     @jwt_required()
     def my_watch_later():
         user_id = get_jwt_identity()
         response, status = NewsService.get_watch_later(user_id)
-        return jsonify(response), status
+        return _service_response(response, status)
 
     @staticmethod
     @jwt_required()
@@ -63,31 +91,30 @@ class NewsController:
         user_id = get_jwt_identity()
         data = request.get_json()
         response, status = NewsService.add_to_favourites(user_id, data)
-        return jsonify(response), status
+        return _service_response(response, status)
 
     @staticmethod
     @jwt_required()
     def remove_favourite(news_id):
         user_id = get_jwt_identity()
         response, status = NewsService.remove_from_favourites(user_id, news_id)
-        return jsonify(response), status
+        return _service_response(response, status)
 
     @staticmethod
     @jwt_required()
     def my_favourites():
         user_id = get_jwt_identity()
         response, status = NewsService.get_favourites(user_id)
-        return jsonify(response), status
+        return _service_response(response, status)
 
     @staticmethod
     def get_youtube_trending():
         try:
             news = NewsService.get_youtube_trending_news()
-            return jsonify(news), 200
+            return success_response(news, "YouTube trending news fetched successfully", 200)
         except Exception as e:
-            return jsonify({
-                "error": f"Failed to fetch YouTube trending news: {str(e)}"
-            }), 500
+            current_app.logger.exception(f"Failed to fetch YouTube trending news: {str(e)}")
+            return error_response(f"Failed to fetch YouTube trending news: {str(e)}", 500)
 
 
 def get_youtube_trending():
@@ -101,12 +128,11 @@ def get_saved_news():
         for item in news_items:
             item["_id"] = str(item["_id"])
 
-        return jsonify(news_items), 200
+        return success_response(news_items, "News fetched successfully", 200)
 
-    except Exception:
-        return jsonify({
-            "error": "Failed to fetch saved news"
-        }), 500
+    except Exception as e:
+        current_app.logger.exception(f"Failed to fetch saved news: {str(e)}")
+        return error_response("Failed to fetch saved news", 500)
 
 
 def get_saved_youtube_news():
@@ -116,12 +142,11 @@ def get_saved_youtube_news():
         for item in news_items:
             item["_id"] = str(item["_id"])
 
-        return jsonify(news_items), 200
+        return success_response(news_items, "Saved YouTube news fetched successfully", 200)
 
-    except Exception:
-        return jsonify({
-            "error": "Failed to fetch saved YouTube news"
-        }), 500
+    except Exception as e:
+        current_app.logger.exception(f"Failed to fetch saved YouTube news: {str(e)}")
+        return error_response("Failed to fetch saved YouTube news", 500)
 
 
 def analyze_saved_news(news_id):
@@ -129,17 +154,13 @@ def analyze_saved_news(news_id):
         news_item = mongo.db.news.find_one({"_id": ObjectId(news_id)})
 
         if not news_item:
-            return jsonify({
-                "error": "News item not found"
-            }), 404
+            return error_response("News item not found", 404)
 
         title = news_item.get("title", "")
         content = news_item.get("content", "")
 
         if not title or not content:
-            return jsonify({
-                "error": "News item does not contain enough content for analysis"
-            }), 400
+            return error_response("News item does not contain enough content for analysis", 400)
 
         result = analyze_news_service(title, content)
 
@@ -155,16 +176,15 @@ def analyze_saved_news(news_id):
             }
         )
 
-        return jsonify({
-            "message": "News analyzed successfully",
-            "news_id": news_id,
-            "result": result
-        }), 200
+        return success_response(
+            {"news_id": news_id, "result": result},
+            "News analyzed successfully",
+            200,
+        )
 
     except Exception as e:
-        return jsonify({
-            "error": "Failed to analyze selected news"
-        }), 500
+        current_app.logger.exception(f"Failed to analyze selected news: {str(e)}")
+        return error_response("Failed to analyze selected news", 500)
 
 
 def get_analyzed_news():
@@ -176,22 +196,24 @@ def get_analyzed_news():
         for item in analyzed_items:
             item["_id"] = str(item["_id"])
 
-        return jsonify(analyzed_items), 200
+        return success_response(analyzed_items, "Analyzed news fetched successfully", 200)
 
-    except Exception:
-        return jsonify({
-            "error": "Failed to fetch analyzed news"
-        }), 500
+    except Exception as e:
+        current_app.logger.exception(f"Failed to fetch analyzed news: {str(e)}")
+        return error_response("Failed to fetch analyzed news", 500)
 
 
 def get_platform_related_news(platform):
     try:
         news = get_platform_news(platform)
-        return jsonify(news), 200
+        return success_response(news, f"{platform.capitalize()} news fetched successfully", 200)
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception:
-        return jsonify({"error": "Failed to fetch platform-related news"}), 500
+        return error_response(str(e), 400)
+    except Exception as e:
+        current_app.logger.exception(
+            f"Failed to fetch platform-related news for '{platform}': {str(e)}"
+        )
+        return error_response("Failed to fetch platform-related news", 500)
 
 
 def get_instagram_related_news():

@@ -8,6 +8,8 @@ from app.modules.fake_detection import fake_detection_bp
 from app.modules.analytics import analytics_bp
 from app.core.extensions import mongo, bcrypt, jwt, socketio
 from app.modules.notifications import notifications_bp
+from app.core.errors.logger import configure_logger
+from app.core.errors.handlers import register_error_handlers
 
 def create_app():
     app = Flask(__name__)
@@ -17,6 +19,8 @@ def create_app():
     bcrypt.init_app(app)
     jwt.init_app(app)
     socketio.init_app(app)
+    configure_logger(app)
+    register_error_handlers(app)
 
     app.register_blueprint(system_bp)
     app.register_blueprint(auth_bp)

@@ -1,4 +1,5 @@
 from app.core.extensions import mongo
+from flask import current_app
 
 
 def get_platform_usage():
@@ -24,6 +25,7 @@ def get_platform_usage():
         return formatted
 
     except Exception as e:
+        current_app.logger.exception(f"Failed to compute platform usage: {str(e)}")
         return []
 
 
@@ -50,7 +52,8 @@ def get_fake_real_stats():
             "mostly_fake": fake_count
         }
 
-    except Exception:
+    except Exception as e:
+        current_app.logger.exception(f"Failed to compute fake/real stats: {str(e)}")
         return {
             "total_checked": 0,
             "mostly_real": 0,
@@ -83,7 +86,10 @@ def get_checked_news_by_platform():
 
         return formatted
 
-    except Exception:
+    except Exception as e:
+        current_app.logger.exception(
+            f"Failed to compute checked-news-by-platform stats: {str(e)}"
+        )
         return []
 
 
@@ -108,7 +114,8 @@ def get_top_fake_news(limit=5):
 
         return result
 
-    except Exception:
+    except Exception as e:
+        current_app.logger.exception(f"Failed to fetch top fake news: {str(e)}")
         return []
 
 
@@ -133,5 +140,6 @@ def get_recent_analyzed_news(limit=5):
 
         return result
 
-    except Exception:
+    except Exception as e:
+        current_app.logger.exception(f"Failed to fetch recent analyzed news: {str(e)}")
         return []
