@@ -5,6 +5,7 @@ from app.core.extensions import mongo, bcrypt, jwt
 from app.modules.system.routes import system_bp
 from app.modules.news.routes import news_bp
 from app.modules.fake_detection import fake_detection_bp
+from app.modules.analytics import analytics_bp
 
 def create_app():
     app = Flask(__name__)
@@ -18,5 +19,6 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(news_bp, url_prefix="/api/news")
     app.register_blueprint(fake_detection_bp)
+    app.register_blueprint(analytics_bp)
 
     return app
