@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from app.modules.auth.routes import auth_bp
 from app.core.config import Config
 from app.core.extensions import mongo, bcrypt, jwt
@@ -14,6 +15,7 @@ from app.core.errors.handlers import register_error_handlers
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    CORS(app)
 
     mongo.init_app(app)
     bcrypt.init_app(app)
