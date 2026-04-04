@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
 
 export default function Navbar() {
+    const isAuthenticated = Boolean(localStorage.getItem("token"));
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+    };
+
     return (
         <nav className="sticky top-0 z-50 bg-[#F9F9F9]/90 backdrop-blur-md px-8 py-3 flex justify-between items-center border border-white/20 shadow-lg shadow-blue-400/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none">
             
@@ -15,8 +22,16 @@ export default function Navbar() {
             <div className="flex items-center gap-6 text-black text-lg">
                 <NavLink to="/" label="Home" />
                 <NavLink to="/categories" label="Categories" />
-                <NavLink to="/login" label="Login" />
-                <NavLink to="/signup" label="Sign Up" isButton />
+                {!isAuthenticated && <NavLink to="/login" label="Login" />}
+                {!isAuthenticated && <NavLink to="/signup" label="Sign Up" isButton />}
+                {isAuthenticated && (
+                    <button
+                        onClick={handleLogout}
+                        className="rounded-xl border border-red-300 bg-red-50 px-4 py-1 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                    >
+                        Logout
+                    </button>
+                )}
             </div>
         </nav>
     );
