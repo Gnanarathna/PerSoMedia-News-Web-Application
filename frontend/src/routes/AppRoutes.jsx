@@ -21,6 +21,38 @@ export default function AppRoutes() {
           </ProtectedRoute>
         )}
       />
+      <Route
+        path="/dashboard/categories"
+        element={(
+          <ProtectedRoute>
+            <Dashboard view="categories" />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/detect"
+        element={(
+          <ProtectedRoute>
+            <Dashboard view="detect" />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/watchlater"
+        element={(
+          <ProtectedRoute>
+            <Dashboard view="watchlater" />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/dashboard/favorites"
+        element={(
+          <ProtectedRoute>
+            <Dashboard view="favorites" />
+          </ProtectedRoute>
+        )}
+      />
     </Routes>
   );
 }
