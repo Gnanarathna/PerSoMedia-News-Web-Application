@@ -4,6 +4,7 @@ import { motion as Motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { FaChevronUp } from "react-icons/fa";
 import { getAllNews } from "../services/newsService";
+import { getWatchLaterNews } from "../services/newsService";
 
 const INITIAL_VISIBLE_NEWS = 24;
 const LOAD_MORE_STEP = 20;
@@ -33,6 +34,7 @@ const viewMeta = {
   },
   watchlater: {
     title: "Watch Later",
+    titleFontFamily: "Georgia, 'Times New Roman', serif",
     showNewsGrid: false,
   },
   favorites: {
@@ -50,6 +52,7 @@ export default function Dashboard({ view = "home" }) {
   const [error, setError] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [visibleNewsCount, setVisibleNewsCount] = useState(INITIAL_VISIBLE_NEWS);
+  const [watchLaterItems, setWatchLaterItems] = useState([]);
   const visibleNews = filteredNews.slice(0, visibleNewsCount);
 
   useEffect(() => {
@@ -75,6 +78,19 @@ export default function Dashboard({ view = "home" }) {
     };
 
     fetchNews();
+  }, []);
+
+  useEffect(() => {
+    const fetchWatchLaterItems = async () => {
+      try {
+        const data = await getWatchLaterNews();
+        setWatchLaterItems(Array.isArray(data) ? data : []);
+      } catch {
+        setWatchLaterItems([]);
+      }
+    };
+
+    fetchWatchLaterItems();
   }, []);
 
   useEffect(() => {
@@ -109,6 +125,22 @@ export default function Dashboard({ view = "home" }) {
 
   const handleScrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const isWatchLaterSaved = (newsItem) => {
+    const newsId = String(newsItem?._id || newsItem?.news_id || "").trim();
+    const sourceUrl = String(newsItem?.source_url || newsItem?.url || "").trim().toLowerCase();
+
+    return watchLaterItems.some((savedItem) => {
+      const savedNewsId = String(savedItem?.news_id || savedItem?._id || "").trim();
+      const savedSourceUrl = String(savedItem?.source_url || savedItem?.url || "").trim().toLowerCase();
+
+      if (newsId && savedNewsId && newsId === savedNewsId) {
+        return true;
+      }
+
+      return sourceUrl && savedSourceUrl && sourceUrl === savedSourceUrl;
+    });
   };
 
   return (
@@ -174,7 +206,7 @@ export default function Dashboard({ view = "home" }) {
                   whileHover={{ scale: 1.03 }}
                   transition={{ delay: 0.45 + index * 0.05, duration: 0.45, type: "spring", stiffness: 180 }}
                 >
-                  <NewsCard news={item} />
+                  <NewsCard news={item} watchLaterSaved={isWatchLaterSaved(item)} />
                 </Motion.div>
               ))}
             </div>
@@ -221,7 +253,15 @@ export default function Dashboard({ view = "home" }) {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          This is the private {currentView.title.toLowerCase()} page.
+          <h1
+            className="text-3xl font-bold tracking-tight text-slate-900"
+            style={{ fontFamily: currentView.titleFontFamily || "inherit" }}
+          >
+            {currentView.title}
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            This is the private {currentView.title.toLowerCase()} page.
+          </p>
         </Motion.div>
       )}
 

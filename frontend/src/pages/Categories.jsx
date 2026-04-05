@@ -3,7 +3,7 @@ import { motion as Motion } from "framer-motion";
 import { FaChevronUp } from "react-icons/fa";
 import PrivateNavbar from "../components/PrivateNavbar";
 import NewsCard from "../components/NewsCard";
-import { getPlatformNews } from "../services/newsService";
+import { getPlatformNews, getWatchLaterNews } from "../services/newsService";
 import {
   FaYoutube,
   FaFacebook,
@@ -40,6 +40,7 @@ export default function Categories() {
   const [error, setError] = useState("");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const categoryNewsCache = useRef({});
+  const [watchLaterItems, setWatchLaterItems] = useState([]);
 
   const activePlatformTextClass = {
     youtube: "text-red-600",
@@ -99,6 +100,19 @@ export default function Categories() {
   }, [selectedCategory]);
 
   useEffect(() => {
+    const fetchWatchLaterItems = async () => {
+      try {
+        const data = await getWatchLaterNews();
+        setWatchLaterItems(Array.isArray(data) ? data : []);
+      } catch {
+        setWatchLaterItems([]);
+      }
+    };
+
+    fetchWatchLaterItems();
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     const prefetchOtherCategories = async () => {
@@ -146,6 +160,22 @@ export default function Categories() {
 
   const handleScrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const isWatchLaterSaved = (newsItem) => {
+    const newsId = String(newsItem?._id || newsItem?.news_id || "").trim();
+    const sourceUrl = String(newsItem?.source_url || newsItem?.url || "").trim().toLowerCase();
+
+    return watchLaterItems.some((savedItem) => {
+      const savedNewsId = String(savedItem?.news_id || savedItem?._id || "").trim();
+      const savedSourceUrl = String(savedItem?.source_url || savedItem?.url || "").trim().toLowerCase();
+
+      if (newsId && savedNewsId && newsId === savedNewsId) {
+        return true;
+      }
+
+      return sourceUrl && savedSourceUrl && sourceUrl === savedSourceUrl;
+    });
   };
 
   const visibleNews = news.slice(0, visibleCount);
@@ -236,7 +266,7 @@ export default function Categories() {
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-8">
               {visibleNews.map((item, index) => (
-                <NewsCard key={item._id || index} news={item} />
+                <NewsCard key={item._id || index} news={item} watchLaterSaved={isWatchLaterSaved(item)} />
               ))}
             </div>
 

@@ -9,7 +9,7 @@ import {
   FaBookmark,
 } from "react-icons/fa";
 import { SiTiktok, SiX } from "react-icons/si";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   addToWatchLater,
   addToFavourite,
@@ -18,10 +18,14 @@ import {
   analyzeNews,
 } from "../services/newsService";
 
-export default function NewsCard({ news }) {
-  const [savedWatchLater, setSavedWatchLater] = useState(false);
+export default function NewsCard({ news, watchLaterMode = false, watchLaterSaved = false, onWatchLaterRemoved }) {
+  const [savedWatchLater, setSavedWatchLater] = useState(watchLaterMode || watchLaterSaved);
   const [savedFavourite, setSavedFavourite] = useState(false);
   const [checking, setChecking] = useState(false);
+
+  useEffect(() => {
+    setSavedWatchLater(watchLaterMode || watchLaterSaved);
+  }, [watchLaterMode, watchLaterSaved]);
 
   const [analysis, setAnalysis] = useState({
     is_checked: news.is_checked || false,
@@ -42,21 +46,23 @@ export default function NewsCard({ news }) {
   const fakeScore = analysis.fake_score ?? 0;
   const isChecked = analysis.is_checked;
 
-  const fallbackNewsId = news.source_url || `${news.platform || "news"}-${news.title || "untitled"}`;
+  const fallbackNewsId = news._id || news.news_id || news.source_url || `${news.platform || "news"}-${news.title || "untitled"}`;
   const fallbackThumbnail = "https://via.placeholder.com/300x150";
-  const fallbackSourceUrl = "https://example.com";
+  const fallbackSourceUrl = news.source_url || news.url || "https://example.com";
 
   const formattedPayload = {
-    news_id: news._id || fallbackNewsId,
+    news_id: news._id || news.news_id || fallbackNewsId,
     platform: news.platform || "unknown",
     title: news.title || "Untitled News",
-    url: news.source_url || fallbackSourceUrl,
-    thumbnail_url: news.image_url || fallbackThumbnail,
+    url: news.source_url || news.url || fallbackSourceUrl,
+    thumbnail_url: news.image_url || news.thumbnail_url || fallbackThumbnail,
+    published_at: news.published_at || null,
   };
 
   const handleViewNews = () => {
-    if (!news.source_url) return;
-    window.open(news.source_url, "_blank", "noopener,noreferrer");
+    const targetUrl = news.source_url || news.url;
+    if (!targetUrl) return;
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
   };
 
   const formatTimeAgo = (publishedAt) => {
@@ -80,6 +86,9 @@ export default function NewsCard({ news }) {
       if (savedWatchLater) {
         await removeFromWatchLater(formattedPayload.news_id);
         setSavedWatchLater(false);
+        if (watchLaterMode && typeof onWatchLaterRemoved === "function") {
+          onWatchLaterRemoved(formattedPayload.news_id);
+        }
         alert("Removed from Watch Later");
         return;
       }
@@ -136,7 +145,7 @@ export default function NewsCard({ news }) {
       </div>
 
       <img
-        src={news.image_url || "https://via.placeholder.com/300x150"}
+        src={news.image_url || news.thumbnail_url || "https://via.placeholder.com/300x150"}
         alt={news.title}
         className="rounded-lg mb-3 w-full h-[125px] object-cover"
       />
@@ -213,16 +222,22 @@ export default function NewsCard({ news }) {
           onClick={handleWatchLater}
           className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-sm font-semibold transition-all shadow-sm ${
             savedWatchLater
-              ? "bg-green-100 border-green-300 text-green-800 hover:bg-green-200 hover:border-green-400"
+              ? watchLaterMode
+                ? "bg-red-100 border-red-300 text-red-800 hover:bg-red-200 hover:border-red-400"
+                : "bg-green-100 border-green-300 text-green-800 hover:bg-green-200 hover:border-green-400"
               : "bg-white border-slate-300 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
           }`}
         >
           {savedWatchLater ? (
-            <FaBookmark className="text-green-700" />
+            watchLaterMode ? (
+              <FaBookmark className="text-red-700" />
+            ) : (
+              <FaBookmark className="text-green-700" />
+            )
           ) : (
             <FaRegBookmark className="text-blue-600" />
           )}
-          {savedWatchLater ? "Saved" : "Save to Watch Later"}
+          {savedWatchLater ? (watchLaterMode ? "Remove from Watch Later" : "Saved") : "Save to Watch Later"}
         </button>
 
         <button

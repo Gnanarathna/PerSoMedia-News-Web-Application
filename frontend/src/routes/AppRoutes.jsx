@@ -5,6 +5,7 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
+import WatchLater from "../pages/WatchLater";
 
 export default function AppRoutes() {
   return (
@@ -40,7 +41,7 @@ export default function AppRoutes() {
         path="/dashboard/watchlater"
         element={(
           <ProtectedRoute>
-            <Dashboard view="watchlater" />
+            <WatchLater />
           </ProtectedRoute>
         )}
       />
