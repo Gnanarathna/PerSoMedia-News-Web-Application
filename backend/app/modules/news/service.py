@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import requests
 from flask import current_app
 from app.modules.news.repository import NewsRepository
 from .api_client import fetch_youtube_news_videos, fetch_platform_related_news
@@ -47,7 +48,7 @@ def _is_allowed_language_text(text: str) -> bool:
 
 
 def get_platform_news(platform):
-    response = fetch_platform_related_news(platform)
+    response = fetch_platform_related_news(platform, max_results=20)
     articles = response.get("articles", [])
 
     normalized_news = []
@@ -246,8 +247,15 @@ class NewsService:
 
     @staticmethod
     def get_youtube_trending_news():
-        response = fetch_youtube_news_videos()
-        items = response.get("items", [])
+        try:
+            response = fetch_youtube_news_videos(max_results=20)
+            items = response.get("items", [])
+        except requests.exceptions.HTTPError as http_error:
+            status_code = getattr(http_error.response, "status_code", "unknown")
+            response_text = getattr(http_error.response, "text", "") or str(http_error)
+            raise RuntimeError(
+                f"YouTube API request failed (status {status_code}): {response_text}"
+            ) from http_error
 
         normalized_news = []
 
@@ -256,6 +264,11 @@ class NewsService:
             title = snippet.get("title", "")
             description = snippet.get("description", "")
             channel_title = snippet.get("channelTitle", "")
+            item_id = item.get("id")
+            video_id = item_id.get("videoId") if isinstance(item_id, dict) else item_id
+
+            if not video_id:
+                continue
 
             combined_text = f"{title} {description}".lower()
 
@@ -276,7 +289,7 @@ class NewsService:
                 "content": description,
                 "platform": "youtube",
                 "image_url": snippet.get("thumbnails", {}).get("high", {}).get("url"),
-                "source_url": f"https://www.youtube.com/watch?v={item.get('id', {}).get('videoId')}",
+                "source_url": f"https://www.youtube.com/watch?v={video_id}" if video_id else None,
                 "published_at": snippet.get("publishedAt"),
                 "real_score": None,
                 "fake_score": None,

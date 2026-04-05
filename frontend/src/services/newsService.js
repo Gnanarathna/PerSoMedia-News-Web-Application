@@ -24,6 +24,25 @@ const toTimestamp = (value) => {
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
+const dedupeNewsItems = (items) => {
+  const seen = new Set();
+
+  return items.filter((item) => {
+    const sourceUrl = String(item.source_url || "").trim().toLowerCase();
+    const title = String(item.title || "").trim().toLowerCase();
+    const platform = String(item.platform || "").trim().toLowerCase();
+    const publishedAt = String(item.published_at || "").trim();
+
+    const key = sourceUrl || `${platform}|${title}|${publishedAt}`;
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
 const isTokenExpiredError = (result) => {
   const message = String(result?.message || result?.error || result?.msg || "").toLowerCase();
   return message.includes("token has expired") || message.includes("signature has expired");
@@ -49,10 +68,11 @@ export const getAllNews = async () => {
     })
   );
 
-  const successfulNews = responses
+  const successfulNews = dedupeNewsItems(
+    responses
     .filter((result) => result.status === "fulfilled")
     .flatMap((result) => result.value)
-    .sort((a, b) => toTimestamp(b.published_at) - toTimestamp(a.published_at));
+  ).sort((a, b) => toTimestamp(b.published_at) - toTimestamp(a.published_at));
 
   if (successfulNews.length > 0) {
     return successfulNews;
@@ -60,6 +80,27 @@ export const getAllNews = async () => {
 
   const firstFailure = responses.find((result) => result.status === "rejected");
   throw new Error(firstFailure?.reason?.message || "Failed to fetch news");
+};
+
+export const analyzeNews = async (newsItem) => {
+  const response = await fetch("http://127.0.0.1:5000/api/fake-detection/analyze", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      title: newsItem.title,
+      content: newsItem.content || newsItem.title,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to analyze news");
+  }
+
+  return result.data;
 };
 
 export const addToWatchLater = async (newsItem) => {

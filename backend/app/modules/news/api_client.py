@@ -1,15 +1,15 @@
 import requests
 from flask import current_app
-from datetime import datetime, timedelta, timezone
 
 
-def fetch_youtube_news_videos(max_results=None):
+def fetch_youtube_news_videos(max_results=20):
     api_key = current_app.config.get("YOUTUBE_API_KEY")
 
-    # Fetch only recent videos (last 7 days)
-    published_after = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    if not api_key:
+        raise ValueError("YOUTUBE_API_KEY is not configured")
 
-    url = "https://www.googleapis.com/youtube/v3/search"
+    # Prefer the videos endpoint for lower quota usage.
+    url = "https://www.googleapis.com/youtube/v3/videos"
     collected_items = []
     next_page_token = None
 
@@ -24,12 +24,9 @@ def fetch_youtube_news_videos(max_results=None):
 
         params = {
             "part": "snippet",
-            "q": "Sri Lanka latest news OR Sri Lanka breaking news OR Sri Lanka current affairs",
-            "type": "video",
+            "chart": "mostPopular",
+            "videoCategoryId": "25",  # News & Politics
             "regionCode": "LK",
-            "relevanceLanguage": "en",
-            "order": "date",
-            "publishedAfter": published_after,
             "maxResults": per_page,
             "key": api_key
         }

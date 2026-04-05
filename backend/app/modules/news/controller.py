@@ -27,6 +27,26 @@ def _service_response(response, status):
     return success_response(data, message, status)
 
 
+def _dedupe_news_items(items):
+    seen = set()
+    unique_items = []
+
+    for item in items or []:
+        source_url = (item.get("source_url") or "").strip().lower()
+        title = (item.get("title") or "").strip().lower()
+        platform = (item.get("platform") or "").strip().lower()
+        published_at = (item.get("published_at") or "").strip()
+
+        key = source_url or f"{platform}|{title}|{published_at}"
+        if not key or key in seen:
+            continue
+
+        seen.add(key)
+        unique_items.append(item)
+
+    return unique_items
+
+
 class NewsController:
 
     @staticmethod
@@ -114,7 +134,10 @@ class NewsController:
             return success_response(news, "YouTube trending news fetched successfully", 200)
         except Exception as e:
             current_app.logger.exception(f"Failed to fetch YouTube trending news: {str(e)}")
-            return error_response(f"Failed to fetch YouTube trending news: {str(e)}", 500)
+            return error_response(
+                f"Failed to fetch YouTube trending news: {str(e)}",
+                500,
+            )
 
 
 def get_youtube_trending():
@@ -123,30 +146,49 @@ def get_youtube_trending():
 
 def get_saved_news():
     try:
-        news_items = list(mongo.db.news.find({}).sort("published_at", -1))
+        platform = (request.args.get("platform") or "").strip().lower()
+        allowed = ["youtube", "facebook", "instagram", "tiktok", "x"]
 
-        for item in news_items:
-            item["_id"] = str(item["_id"])
+        if platform and platform not in allowed:
+            return error_response("Invalid platform", 400)
 
-        return success_response(news_items, "News fetched successfully", 200)
+        if platform == "youtube":
+            news_items = _dedupe_news_items(NewsService.get_youtube_trending_news())
+            return success_response(news_items, "YouTube news fetched successfully", 200)
+
+        if platform in {"facebook", "instagram", "tiktok", "x"}:
+            news_items = _dedupe_news_items(get_platform_news(platform))
+            return success_response(news_items, f"{platform.capitalize()} news fetched successfully", 200)
+
+        all_news = []
+        all_news.extend(NewsService.get_youtube_trending_news())
+        all_news.extend(get_platform_news("facebook"))
+        all_news.extend(get_platform_news("instagram"))
+        all_news.extend(get_platform_news("tiktok"))
+        all_news.extend(get_platform_news("x"))
+
+        all_news = _dedupe_news_items(all_news)
+
+        all_news.sort(
+            key=lambda item: item.get("published_at") or "",
+            reverse=True,
+        )
+
+        return success_response(all_news, "Live news fetched successfully", 200)
 
     except Exception as e:
-        current_app.logger.exception(f"Failed to fetch saved news: {str(e)}")
-        return error_response("Failed to fetch saved news", 500)
+        current_app.logger.exception(f"Failed to fetch live news: {str(e)}")
+        return error_response("Failed to fetch live news", 500)
 
 
 def get_saved_youtube_news():
     try:
-        news_items = list(mongo.db.news.find({"platform": "youtube"}).sort("published_at", -1))
-
-        for item in news_items:
-            item["_id"] = str(item["_id"])
-
-        return success_response(news_items, "Saved YouTube news fetched successfully", 200)
+        news_items = _dedupe_news_items(NewsService.get_youtube_trending_news())
+        return success_response(news_items, "YouTube news fetched successfully", 200)
 
     except Exception as e:
-        current_app.logger.exception(f"Failed to fetch saved YouTube news: {str(e)}")
-        return error_response("Failed to fetch saved YouTube news", 500)
+        current_app.logger.exception(f"Failed to fetch YouTube news: {str(e)}")
+        return error_response("Failed to fetch YouTube news", 500)
 
 
 def analyze_saved_news(news_id):
