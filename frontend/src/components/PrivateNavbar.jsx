@@ -11,12 +11,7 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
   };
 
   return (
-    <motion.nav
-      initial={{ y: -24, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-      className="sticky top-0 z-40 bg-[#F9F9F9]/90 backdrop-blur-md px-8 py-3 flex justify-between items-center border border-white/20 shadow-lg shadow-blue-400/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none"
-    >
+    <nav className="sticky top-0 z-40 bg-[#F9F9F9]/90 backdrop-blur-md px-8 py-3 flex justify-between items-center border border-white/20 shadow-lg shadow-blue-400/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none">
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
       <Link to="/dashboard" className="relative z-10">
         <img
@@ -27,12 +22,7 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
       </Link>
       </motion.div>
 
-      <motion.div
-        initial={{ y: 10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.12, duration: 0.35, ease: "easeOut" }}
-        className="relative z-10 flex items-center gap-6 text-black text-lg"
-      >
+      <div className="relative z-10 flex items-center gap-6 text-black text-lg">
         <PrivateNavLink to="/dashboard" label="Home" />
         <PrivateNavLink to="/dashboard/categories" label="Categories" />
         <PrivateNavLink to="/dashboard/detect" label="Detect fake news" />
@@ -62,14 +52,9 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
             <FaSearch className="h-4 w-4" />
           </motion.button>
         </div>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ x: 12, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.18, duration: 0.35, ease: "easeOut" }}
-        className="relative z-10 flex items-center gap-3"
-      >
+      <div className="relative z-10 flex items-center gap-3">
         <motion.button
           type="button"
           aria-label="Notifications"
@@ -96,8 +81,8 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
         >
           Logout
         </motion.button>
-      </motion.div>
-    </motion.nav>
+      </div>
+    </nav>
   );
 }
 

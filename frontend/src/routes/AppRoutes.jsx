@@ -10,7 +10,6 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/categories" element={<Categories />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route
@@ -25,7 +24,7 @@ export default function AppRoutes() {
         path="/dashboard/categories"
         element={(
           <ProtectedRoute>
-            <Dashboard view="categories" />
+            <Categories />
           </ProtectedRoute>
         )}
       />
