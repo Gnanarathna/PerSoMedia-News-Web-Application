@@ -65,9 +65,11 @@ export default function NewsCard({ news }) {
     const date = new Date(publishedAt);
     const now = new Date();
     const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
+    if (diffDays >= 1) return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`;
     if (diffHours >= 1) return `${diffHours} hours ago`;
     if (diffMinutes >= 1) return `${diffMinutes} minutes ago`;
     return "Just now";

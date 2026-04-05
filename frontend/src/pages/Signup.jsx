@@ -29,9 +29,11 @@ export default function Signup() {
 
   const validate = () => {
     const newErrors = {};
+    const emailRegex = /^[^\s@$]+@[^\s@$]+\.[^\s@$]+$/;
 
     if (!form.fullName.trim()) newErrors.fullName = "Name required";
-    if (!form.email.includes("@")) newErrors.email = "Invalid email";
+    if (!emailRegex.test(form.email)) newErrors.email = "Invalid email";
+
     if (!form.password) newErrors.password = "Password required";
     if (form.password && form.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
@@ -126,7 +128,9 @@ export default function Signup() {
               className="w-full rounded-lg bg-gray-100 py-3 pl-10 pr-4 outline-none"
             />
           </div>
-          {errors.fullName && <p className="text-red-500 text-sm mb-3">{errors.fullName}</p>}
+          <p className={`text-red-500 text-sm min-h-[20px] ${errors.fullName ? "visible" : "invisible"}`}>
+            {errors.fullName || "placeholder"}
+          </p>
 
           <div className="relative mb-1">
             <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -139,7 +143,9 @@ export default function Signup() {
               className="w-full rounded-lg bg-gray-100 py-3 pl-10 pr-4 outline-none"
             />
           </div>
-          {errors.email && <p className="text-red-500 text-sm mb-3">{errors.email}</p>}
+          <p className={`text-red-500 text-sm min-h-[20px] ${errors.email ? "visible" : "invisible"}`}>
+            {errors.email || "placeholder"}
+          </p>
 
           <div className="relative mb-1">
             <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -160,7 +166,9 @@ export default function Signup() {
               {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-red-500 text-sm mb-3">{errors.password}</p>}
+          <p className={`text-red-500 text-sm min-h-[20px] ${errors.password ? "visible" : "invisible"}`}>
+            {errors.password || "placeholder"}
+          </p>
 
           <div className="relative mb-1">
             <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -181,16 +189,16 @@ export default function Signup() {
               {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
             </button>
           </div>
-          {errors.confirmPassword && (
-            <p className="text-red-500 text-sm mb-4">{errors.confirmPassword}</p>
-          )}
+          <p className={`text-red-500 text-sm min-h-[20px] ${errors.confirmPassword ? "visible" : "invisible"}`}>
+            {errors.confirmPassword || "placeholder"}
+          </p>
 
           {/* Button */}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 text-sm rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Please wait..." : "Sign Up"}
           </button>

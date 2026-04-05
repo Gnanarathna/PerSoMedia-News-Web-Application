@@ -2,20 +2,20 @@ import PrivateNavbar from "../components/PrivateNavbar";
 import NewsCard from "../components/NewsCard";
 import { motion as Motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { FaChevronUp } from "react-icons/fa";
 import { getAllNews } from "../services/newsService";
 
 const INITIAL_VISIBLE_NEWS = 24;
 const LOAD_MORE_STEP = 20;
+const MIN_LOADING_DURATION_MS = 1000;
 
-const shuffleNews = (items) => {
-  const shuffled = [...items];
+const sortByLatestPublished = (items) => {
+  const toTime = (value) => {
+    const time = value ? new Date(value).getTime() : 0;
+    return Number.isNaN(time) ? 0 : time;
+  };
 
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
-  }
-
-  return shuffled;
+  return [...items].sort((a, b) => toTime(b?.published_at) - toTime(a?.published_at));
 };
 
 const viewMeta = {
@@ -48,19 +48,28 @@ export default function Dashboard({ view = "home" }) {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [visibleNewsCount, setVisibleNewsCount] = useState(INITIAL_VISIBLE_NEWS);
   const visibleNews = filteredNews.slice(0, visibleNewsCount);
 
   useEffect(() => {
     const fetchNews = async () => {
+      const startedAt = Date.now();
+
       try {
         const data = await getAllNews();
-        const mixedNews = shuffleNews(data);
-        setNews(mixedNews);
-        setFilteredNews(mixedNews);
+        const latestNews = sortByLatestPublished(data);
+        setNews(latestNews);
+        setFilteredNews(latestNews);
       } catch (err) {
         setError(err.message);
       } finally {
+        const elapsed = Date.now() - startedAt;
+        const remaining = MIN_LOADING_DURATION_MS - elapsed;
+        if (remaining > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remaining));
+        }
+
         setLoading(false);
       }
     };
@@ -76,6 +85,19 @@ export default function Dashboard({ view = "home" }) {
     setVisibleNewsCount(INITIAL_VISIBLE_NEWS);
   }, [search, news]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 500);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   const handleLoadMore = () => {
     setVisibleNewsCount((previousCount) => previousCount + LOAD_MORE_STEP);
   };
@@ -85,19 +107,23 @@ export default function Dashboard({ view = "home" }) {
     setVisibleNewsCount(INITIAL_VISIBLE_NEWS);
   };
 
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <Motion.div
-      initial={{ opacity: 0, y: -30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      className="min-h-screen bg-[#EDEDED]"
-    >
-      
+    <div className="min-h-screen bg-[#EDEDED]">
       <PrivateNavbar
         searchValue={search}
         onSearchChange={setSearch}
         onSearch={handleSearch}
       />
+
+      <Motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
 
       {currentView.showNewsGrid ? (
         <>
@@ -199,6 +225,23 @@ export default function Dashboard({ view = "home" }) {
         </Motion.div>
       )}
 
-    </Motion.div>
+      {showScrollTop && (
+        <Motion.button
+          type="button"
+          onClick={handleScrollToTop}
+          aria-label="Scroll to top"
+          className="fixed bottom-6 right-6 z-50 inline-flex h-10 w-10 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-700 shadow-[0_8px_20px_rgba(37,99,235,0.2)] transition-all hover:bg-blue-50"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          whileHover={{ y: -2, scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+        >
+          <FaChevronUp className="h-3.5 w-3.5" />
+        </Motion.button>
+      )}
+
+      </Motion.div>
+    </div>
   );
 }

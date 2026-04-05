@@ -1,4 +1,10 @@
 const NEWS_API = "http://127.0.0.1:5000/api/news";
+const ALL_NEWS_CACHE_TTL_MS = 5 * 60 * 1000;
+const PLATFORM_NEWS_CACHE_TTL_MS = 5 * 60 * 1000;
+let allNewsCache = null;
+let allNewsInFlight = null;
+const platformNewsCache = new Map();
+const platformNewsInFlight = new Map();
 
 const LIVE_NEWS_ENDPOINTS = [
   { path: "/youtube/trending", platform: "youtube" },
@@ -54,6 +60,16 @@ const handleExpiredSession = () => {
 };
 
 export const getAllNews = async () => {
+  const now = Date.now();
+  if (allNewsCache && allNewsCache.expiresAt > now) {
+    return allNewsCache.items;
+  }
+
+  if (allNewsInFlight) {
+    return allNewsInFlight;
+  }
+
+  const request = (async () => {
   const responses = await Promise.allSettled(
     LIVE_NEWS_ENDPOINTS.map(async ({ path, platform }) => {
       const response = await fetch(`${NEWS_API}${path}`);
@@ -75,11 +91,73 @@ export const getAllNews = async () => {
   ).sort((a, b) => toTimestamp(b.published_at) - toTimestamp(a.published_at));
 
   if (successfulNews.length > 0) {
+    allNewsCache = {
+      items: successfulNews,
+      expiresAt: Date.now() + ALL_NEWS_CACHE_TTL_MS,
+    };
+
     return successfulNews;
   }
 
   const firstFailure = responses.find((result) => result.status === "rejected");
   throw new Error(firstFailure?.reason?.message || "Failed to fetch news");
+  })();
+
+  allNewsInFlight = request;
+
+  try {
+    return await request;
+  } finally {
+    allNewsInFlight = null;
+  }
+};
+
+export const getPlatformNews = async (platform) => {
+  const platformKey = String(platform || "").trim().toLowerCase();
+  if (!platformKey) {
+    throw new Error("Platform is required");
+  }
+
+  const now = Date.now();
+  const cached = platformNewsCache.get(platformKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.items;
+  }
+
+  const inFlightRequest = platformNewsInFlight.get(platformKey);
+  if (inFlightRequest) {
+    return inFlightRequest;
+  }
+
+  const request = (async () => {
+    const response = await fetch(`${NEWS_API}/platform/${platformKey}`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Failed to fetch platform news");
+    }
+
+    const items = Array.isArray(result.data) ? result.data : [];
+    const filteredItems = items.filter((item) => {
+      const imageUrl = String(item?.image_url || item?.urlToImage || item?.image || "").trim();
+      return /^https?:\/\//i.test(imageUrl);
+    });
+
+    platformNewsCache.set(platformKey, {
+      items: filteredItems,
+      expiresAt: Date.now() + PLATFORM_NEWS_CACHE_TTL_MS,
+    });
+
+    return filteredItems;
+  })();
+
+  platformNewsInFlight.set(platformKey, request);
+
+  try {
+    return await request;
+  } finally {
+    platformNewsInFlight.delete(platformKey);
+  }
 };
 
 export const analyzeNews = async (newsItem) => {

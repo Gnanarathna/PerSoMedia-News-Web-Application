@@ -17,7 +17,7 @@ return (
                 <h4 className="font-semibold mb-4 text-black-100">Quick Links</h4>
                 <ul className="space-y-2 text-sm">
                     <li className="cursor-pointer hover:text-blue-900 transition"><Link to="/">Home</Link></li>
-                    <li className="cursor-pointer hover:text-blue-900 transition"><Link to="/categories">Categories</Link></li>
+                    <li className="cursor-pointer hover:text-blue-900 transition"><Link to="/dashboard/categories">Categories</Link></li>
                     <li className="cursor-pointer hover:text-blue-900 transition"><Link to="/login">Login</Link></li>
                     <li className="cursor-pointer hover:text-blue-900 transition"><Link to="/signup">Sign Up</Link></li>
                 </ul>

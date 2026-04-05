@@ -57,6 +57,7 @@ def fetch_platform_related_news(platform, page_size=100, max_results=None):
     api_key = current_app.config.get("NEWS_API_KEY")
 
     query_map = {
+        "youtube": '"YouTube" AND ("news" OR "viral" OR "misinformation" OR "claim")',
         "facebook": '"Facebook" AND ("news" OR "viral" OR "misinformation" OR "claim")',
         "instagram": '"Instagram" AND ("news" OR "viral" OR "misinformation" OR "claim")',
         "tiktok": '"TikTok" AND ("news" OR "viral" OR "misinformation" OR "claim")',

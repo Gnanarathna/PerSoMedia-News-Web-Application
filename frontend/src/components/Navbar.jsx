@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
+import { hasValidSessionToken } from "../utils/authToken";
 
 export default function Navbar() {
-    const isAuthenticated = Boolean(localStorage.getItem("token"));
+    const isAuthenticated = hasValidSessionToken();
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -21,7 +22,6 @@ export default function Navbar() {
 
             <div className="flex items-center gap-6 text-black text-lg">
                 <NavLink to="/" label="Home" />
-                <NavLink to="/categories" label="Categories" />
                 {!isAuthenticated && <NavLink to="/login" label="Login" />}
                 {!isAuthenticated && <NavLink to="/signup" label="Sign Up" isButton />}
                 {isAuthenticated && (

@@ -47,9 +47,43 @@ def _is_allowed_language_text(text: str) -> bool:
     return has_sinhala or has_english
 
 
+def _load_platform_news_from_storage(platform_key):
+    try:
+        db = mongo.db
+        if db is None and getattr(mongo, "cx", None) is not None:
+            db = mongo.cx.get_default_database()
+
+        if db is None:
+            return []
+
+        cached = db.news_cache.find_one({"cache_key": f"{platform_key}_news"}) or {}
+        cached_items = cached.get("items") if isinstance(cached, dict) else None
+        if isinstance(cached_items, list) and cached_items:
+            return cached_items
+
+        saved_items = list(
+            db.news.find({"platform": platform_key}).sort("published_at", -1).limit(200)
+        )
+        for item in saved_items:
+            if item.get("_id") is not None:
+                item["_id"] = str(item["_id"])
+
+        return saved_items
+    except Exception:
+        return []
+
+
 def get_platform_news(platform):
-    response = fetch_platform_related_news(platform, max_results=20)
-    articles = response.get("articles", [])
+    platform_key = (platform or "").strip().lower()
+
+    try:
+        response = fetch_platform_related_news(platform_key, max_results=100)
+        articles = response.get("articles", [])
+    except Exception as e:
+        current_app.logger.warning(
+            f"Live fetch failed for {platform_key} news. Falling back to cached/stored items: {str(e)}"
+        )
+        return _load_platform_news_from_storage(platform_key)
 
     normalized_news = []
 
@@ -57,7 +91,7 @@ def get_platform_news(platform):
         normalized_news.append({
             "title": article.get("title"),
             "content": article.get("description") or article.get("content"),
-            "platform": platform.lower(),
+            "platform": platform_key,
             "image_url": article.get("urlToImage"),
             "source_url": article.get("url"),
             "published_at": article.get("publishedAt"),
@@ -76,7 +110,6 @@ def get_platform_news(platform):
         if db is None:
             current_app.logger.error("MongoDB connection not initialized")
         else:
-            platform_key = platform.lower()
             inserted_count = 0
             skipped_count = 0
             failed_count = 0
@@ -136,7 +169,10 @@ def get_platform_news(platform):
     except Exception as e:
         current_app.logger.exception(f"Failed to save {platform} news: {str(e)}")
 
-    return normalized_news
+    if normalized_news:
+        return normalized_news
+
+    return _load_platform_news_from_storage(platform_key)
 
 class NewsService:
 
@@ -248,7 +284,7 @@ class NewsService:
     @staticmethod
     def get_youtube_trending_news():
         try:
-            response = fetch_youtube_news_videos(max_results=20)
+            response = fetch_youtube_news_videos(max_results=100)
             items = response.get("items", [])
         except requests.exceptions.HTTPError as http_error:
             status_code = getattr(http_error.response, "status_code", "unknown")

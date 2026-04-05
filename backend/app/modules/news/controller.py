@@ -247,7 +247,15 @@ def get_analyzed_news():
 
 def get_platform_related_news(platform):
     try:
-        news = get_platform_news(platform)
+        normalized_platform = (platform or "").strip().lower()
+
+        if normalized_platform == "youtube":
+            youtube_api_news = NewsService.get_youtube_trending_news()
+            news_api_news = get_platform_news("youtube")
+            news = _dedupe_news_items([*youtube_api_news, *news_api_news])
+        else:
+            news = get_platform_news(normalized_platform)
+
         return success_response(news, f"{platform.capitalize()} news fetched successfully", 200)
     except ValueError as e:
         return error_response(str(e), 400)
