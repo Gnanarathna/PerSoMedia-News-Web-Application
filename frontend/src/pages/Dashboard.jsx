@@ -68,16 +68,20 @@ export default function Dashboard({ view = "home" }) {
     fetchNews();
   }, []);
 
+  useEffect(() => {
+    const filtered = news.filter((item) =>
+      item.title?.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredNews(filtered);
+    setVisibleNewsCount(INITIAL_VISIBLE_NEWS);
+  }, [search, news]);
+
   const handleLoadMore = () => {
     setVisibleNewsCount((previousCount) => previousCount + LOAD_MORE_STEP);
   };
 
   const handleSearch = () => {
-    const filtered = news.filter((item) =>
-      item.title?.toLowerCase().includes(search.toLowerCase())
-    );
-
-    setFilteredNews(shuffleNews(filtered));
+    // Keep support for Enter/button-triggered search while live search handles filtering.
     setVisibleNewsCount(INITIAL_VISIBLE_NEWS);
   };
 
@@ -114,24 +118,41 @@ export default function Dashboard({ view = "home" }) {
             </p>
           </Motion.section>
 
-          {loading && <p className="text-center mt-10 text-lg">Loading news...</p>}
+          {loading && (
+            <div className="flex justify-center mt-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600" />
+            </div>
+          )}
           {error && <p className="text-center mt-10 text-red-500 text-lg">{error}</p>}
 
+          {!loading && !error && filteredNews.length === 0 && (
+            <div className="text-center mt-16">
+              <p className="text-2xl font-semibold text-gray-600">
+                No news found
+              </p>
+              <p className="text-gray-500 mt-2">
+                Try searching something else
+              </p>
+            </div>
+          )}
+
           {/* News Grid */}
-          <div className="grid grid-cols-4 gap-10 px-16 mt-12">
-            {!loading && !error && visibleNews.map((item, index) => (
-              <Motion.div
-                key={item._id || index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                whileHover={{ scale: 1.03 }}
-                transition={{ delay: 0.45 + index * 0.05, duration: 0.45, type: "spring", stiffness: 180 }}
-              >
-                <NewsCard news={item} />
-              </Motion.div>
-            ))}
-          </div>
+          {!loading && !error && filteredNews.length > 0 && (
+            <div className="grid grid-cols-4 gap-10 px-16 mt-12">
+              {visibleNews.map((item, index) => (
+                <Motion.div
+                  key={item._id || index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ delay: 0.45 + index * 0.05, duration: 0.45, type: "spring", stiffness: 180 }}
+                >
+                  <NewsCard news={item} />
+                </Motion.div>
+              ))}
+            </div>
+          )}
 
           {/* More Button */}
           {!loading && !error && filteredNews.length > 0 && (

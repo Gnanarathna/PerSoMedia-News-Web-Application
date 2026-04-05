@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Ensure .env values are used even if stale OS-level env vars are present.
+load_dotenv(override=True)
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")

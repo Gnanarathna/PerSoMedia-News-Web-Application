@@ -15,11 +15,20 @@ import {
   addToFavourite,
   removeFromWatchLater,
   removeFromFavourite,
+  analyzeNews,
 } from "../services/newsService";
 
 export default function NewsCard({ news }) {
   const [savedWatchLater, setSavedWatchLater] = useState(false);
   const [savedFavourite, setSavedFavourite] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const [analysis, setAnalysis] = useState({
+    is_checked: news.is_checked || false,
+    real_score: news.real_score ?? 0,
+    fake_score: news.fake_score ?? 0,
+    explanation: news.explanation || "",
+  });
 
   const platformIcons = {
     youtube: <FaYoutube className="text-red-500 text-3xl" />,
@@ -29,9 +38,9 @@ export default function NewsCard({ news }) {
     x: <SiX className="text-black text-3xl" />,
   };
 
-  const realScore = news.real_score ?? 0;
-  const fakeScore = news.fake_score ?? 0;
-  const isChecked = news.is_checked;
+  const realScore = analysis.real_score ?? 0;
+  const fakeScore = analysis.fake_score ?? 0;
+  const isChecked = analysis.is_checked;
 
   const fallbackNewsId = news.source_url || `${news.platform || "news"}-${news.title || "untitled"}`;
   const fallbackThumbnail = "https://via.placeholder.com/300x150";
@@ -98,6 +107,25 @@ export default function NewsCard({ news }) {
     }
   };
 
+  const handleCheckNews = async () => {
+    try {
+      setChecking(true);
+
+      const result = await analyzeNews(news);
+
+      setAnalysis({
+        is_checked: true,
+        real_score: result.real_score ?? 0,
+        fake_score: result.fake_score ?? 0,
+        explanation: result.explanation || "",
+      });
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setChecking(false);
+    }
+  };
+
   return (
     <div className="bg-[#F3F3F3] rounded-2xl p-4 shadow-sm border border-gray-300 w-full">
       <div className="flex items-center gap-2 mb-3 text-2xl font-medium">
@@ -131,33 +159,51 @@ export default function NewsCard({ news }) {
 
         <button
           type="button"
+          onClick={handleCheckNews}
+          disabled={checking}
           className={`px-5 py-1 rounded-md text-white text-sm font-semibold ${
             isChecked ? "bg-blue-600" : "bg-gray-500"
           }`}
         >
-          {isChecked ? "Checked" : "Check"}
+          {checking ? "Checking..." : isChecked ? "Checked" : "Check"}
         </button>
       </div>
 
-      {isChecked && (
-        <div className="mb-3">
-          <div className="w-full h-2 rounded-full overflow-hidden flex">
-            <div
-              className="bg-green-500 h-2"
-              style={{ width: `${realScore}%` }}
-            />
-            <div
-              className="bg-red-400 h-2"
-              style={{ width: `${fakeScore}%` }}
-            />
-          </div>
+      <div className="mb-3 h-[110px] overflow-hidden">
+        {isChecked ? (
+          <>
+            <div className="w-full h-2 rounded-full overflow-hidden flex">
+              <div
+                className="bg-green-500 h-2"
+                style={{ width: `${realScore}%` }}
+              />
+              <div
+                className="bg-red-400 h-2"
+                style={{ width: `${fakeScore}%` }}
+              />
+            </div>
 
-          <div className="flex justify-between text-sm text-gray-600 mt-1">
-            <span>Real: {realScore}%</span>
-            <span>Fake: {fakeScore}%</span>
+            <div className="flex justify-between text-sm text-gray-600 mt-1">
+              <span>Real: {realScore}%</span>
+              <span>Fake: {fakeScore}%</span>
+            </div>
+
+            {analysis.explanation && (
+              <p className="text-xs text-gray-600 mt-2 leading-relaxed line-clamp-3">
+                {analysis.explanation}
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="h-full rounded-lg border border-dashed border-slate-300 bg-slate-50/70 px-3 py-2 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                Click Check to analyze this news and view real vs fake score.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="flex justify-between items-center mt-3">
         <button
