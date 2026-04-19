@@ -18,14 +18,26 @@ import {
   analyzeNews,
 } from "../services/newsService";
 
-export default function NewsCard({ news, watchLaterMode = false, watchLaterSaved = false, onWatchLaterRemoved }) {
+export default function NewsCard({
+  news,
+  watchLaterMode = false,
+  watchLaterSaved = false,
+  favouriteSaved = false,
+  onWatchLaterRemoved,
+  favouriteMode = false,
+  onFavouriteRemoved,
+}) {
   const [savedWatchLater, setSavedWatchLater] = useState(watchLaterMode || watchLaterSaved);
-  const [savedFavourite, setSavedFavourite] = useState(false);
+  const [savedFavourite, setSavedFavourite] = useState(favouriteMode || favouriteSaved);
   const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     setSavedWatchLater(watchLaterMode || watchLaterSaved);
   }, [watchLaterMode, watchLaterSaved]);
+
+  useEffect(() => {
+    setSavedFavourite(favouriteMode || favouriteSaved);
+  }, [favouriteMode, favouriteSaved]);
 
   const [analysis, setAnalysis] = useState({
     is_checked: news.is_checked || false,
@@ -106,6 +118,9 @@ export default function NewsCard({ news, watchLaterMode = false, watchLaterSaved
       if (savedFavourite) {
         await removeFromFavourite(formattedPayload.news_id);
         setSavedFavourite(false);
+        if (favouriteMode && typeof onFavouriteRemoved === "function") {
+          onFavouriteRemoved(formattedPayload.news_id);
+        }
         alert("Removed from Favourites");
         return;
       }
@@ -226,7 +241,7 @@ export default function NewsCard({ news, watchLaterMode = false, watchLaterSaved
                 ? "bg-red-100 border-red-300 text-red-800 hover:bg-red-200 hover:border-red-400"
                 : "bg-green-100 border-green-300 text-green-800 hover:bg-green-200 hover:border-green-400"
               : "bg-white border-slate-300 text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-          }`}
+          } ${favouriteMode ? "whitespace-nowrap text-xs px-3" : ""}`}
         >
           {savedWatchLater ? (
             watchLaterMode ? (
@@ -240,18 +255,30 @@ export default function NewsCard({ news, watchLaterMode = false, watchLaterSaved
           {savedWatchLater ? (watchLaterMode ? "Remove from Watch Later" : "Saved") : "Save to Watch Later"}
         </button>
 
-        <button
-          type="button"
-          onClick={handleFavourite}
-          className="transition-transform hover:scale-105"
-          aria-label={savedFavourite ? "Remove from favourites" : "Add to favourites"}
-        >
-          {savedFavourite ? (
-            <FaStar className="text-yellow-500 text-xl cursor-pointer" />
-          ) : (
-            <FaRegStar className="text-gray-500 text-xl cursor-pointer" />
-          )}
-        </button>
+        {favouriteMode ? (
+          <button
+            type="button"
+            onClick={handleFavourite}
+            className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition-all hover:bg-rose-50 hover:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
+            aria-label="Remove from favourites"
+          >
+            <FaStar className="text-rose-500" />
+            Remove
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleFavourite}
+            className="transition-transform hover:scale-105"
+            aria-label={savedFavourite ? "Remove from favourites" : "Add to favourites"}
+          >
+            {savedFavourite ? (
+              <FaStar className="text-yellow-500 text-xl cursor-pointer" />
+            ) : (
+              <FaRegStar className="text-gray-500 text-xl cursor-pointer" />
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

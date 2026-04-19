@@ -6,6 +6,11 @@ const MotionLink = motion(Link);
 
 export default function PrivateNavbar({ searchValue = "", onSearchChange, onSearch }) {
   const handleLogout = () => {
+    const shouldLogout = window.confirm("Are you sure you want to logout?");
+    if (!shouldLogout) {
+      return;
+    }
+
     localStorage.removeItem("token");
     window.location.href = "/";
   };
