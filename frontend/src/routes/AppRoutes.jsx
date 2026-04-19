@@ -6,6 +6,7 @@ import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import WatchLater from "../pages/WatchLater";
+import Favourites from "../pages/Favourites";
 
 export default function AppRoutes() {
   return (
@@ -49,7 +50,7 @@ export default function AppRoutes() {
         path="/dashboard/favorites"
         element={(
           <ProtectedRoute>
-            <Dashboard view="favorites" />
+            <Favourites />
           </ProtectedRoute>
         )}
       />

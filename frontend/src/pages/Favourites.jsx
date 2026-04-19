@@ -8,27 +8,32 @@ import { getFavouriteNews, getWatchLaterNews } from "../services/newsService";
 const INITIAL_VISIBLE_NEWS = 24;
 const LOAD_MORE_STEP = 20;
 
-export default function WatchLater() {
-  const [watchLaterNews, setWatchLaterNews] = useState([]);
+export default function Favourites() {
+  const [favouriteNews, setFavouriteNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [visibleNewsCount, setVisibleNewsCount] = useState(INITIAL_VISIBLE_NEWS);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [favouriteItems, setFavouriteItems] = useState([]);
+  const [watchLaterItems, setWatchLaterItems] = useState([]);
 
-  const visibleNews = watchLaterNews.slice(0, visibleNewsCount);
+  const visibleNews = favouriteNews.slice(0, visibleNewsCount);
 
-  const handleRemovedFromWatchLater = (newsId) => {
-    setWatchLaterNews((currentNews) =>
+  const handleRemovedFromFavourites = (newsId) => {
+    setFavouriteNews((currentNews) =>
       currentNews.filter((item) => (item.news_id || item._id) !== newsId)
     );
   };
 
   useEffect(() => {
-    const fetchWatchLater = async () => {
+    const fetchFavourites = async () => {
       try {
-        const data = await getWatchLaterNews();
-        setWatchLaterNews(data);
+        const [favouritesData, watchLaterData] = await Promise.all([
+          getFavouriteNews(),
+          getWatchLaterNews(),
+        ]);
+
+        setFavouriteNews(Array.isArray(favouritesData) ? favouritesData : []);
+        setWatchLaterItems(Array.isArray(watchLaterData) ? watchLaterData : []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -36,20 +41,7 @@ export default function WatchLater() {
       }
     };
 
-    fetchWatchLater();
-  }, []);
-
-  useEffect(() => {
-    const fetchFavouriteItems = async () => {
-      try {
-        const data = await getFavouriteNews();
-        setFavouriteItems(Array.isArray(data) ? data : []);
-      } catch {
-        setFavouriteItems([]);
-      }
-    };
-
-    fetchFavouriteItems();
+    fetchFavourites();
   }, []);
 
   useEffect(() => {
@@ -73,11 +65,11 @@ export default function WatchLater() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const isFavouriteSaved = (newsItem) => {
+  const isWatchLaterSaved = (newsItem) => {
     const newsId = String(newsItem?._id || newsItem?.news_id || "").trim();
     const sourceUrl = String(newsItem?.source_url || newsItem?.url || "").trim().toLowerCase();
 
-    return favouriteItems.some((savedItem) => {
+    return watchLaterItems.some((savedItem) => {
       const savedNewsId = String(savedItem?.news_id || savedItem?._id || "").trim();
       const savedSourceUrl = String(savedItem?.source_url || savedItem?.url || "").trim().toLowerCase();
 
@@ -99,10 +91,10 @@ export default function WatchLater() {
             className="text-4xl font-bold tracking-tight text-slate-900 md:text-5xl"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
-            Watch Later
+            Favourites
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">
-            Review the articles you saved for later and jump back into them whenever you are ready.
+            Review the stories you marked as favourites and revisit them anytime.
           </p>
         </div>
 
@@ -118,35 +110,35 @@ export default function WatchLater() {
           </div>
         )}
 
-        {!loading && !error && watchLaterNews.length === 0 && (
+        {!loading && !error && favouriteNews.length === 0 && (
           <div className="mt-10 rounded-[28px] border border-slate-200 bg-white/90 px-8 py-16 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <div className="mx-auto flex max-w-xl flex-col items-center text-center">
-              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-3xl text-blue-700 shadow-sm">
-                <span>⏱</span>
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 text-3xl text-amber-700 shadow-sm">
+                <span>*</span>
               </div>
-              <h2 className="text-2xl font-semibold text-slate-900">Nothing saved yet</h2>
+              <h2 className="text-2xl font-semibold text-slate-900">No favourite news yet</h2>
               <p className="mt-3 text-base leading-7 text-slate-600">
-                Saved Watch Later stories will appear here after you tap the bookmark button on any news card.
+                Favourite stories will appear here after you tap the star button on any news card.
               </p>
             </div>
           </div>
         )}
 
-        {!loading && !error && watchLaterNews.length > 0 && (
+        {!loading && !error && favouriteNews.length > 0 && (
           <>
             <div className="mt-10 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
               {visibleNews.map((item, index) => (
                 <NewsCard
-                  key={item.news_id || index}
+                  key={item.news_id || item._id || index}
                   news={item}
-                  watchLaterMode
-                  favouriteSaved={isFavouriteSaved(item)}
-                  onWatchLaterRemoved={handleRemovedFromWatchLater}
+                  watchLaterSaved={isWatchLaterSaved(item)}
+                  favouriteMode
+                  onFavouriteRemoved={handleRemovedFromFavourites}
                 />
               ))}
             </div>
 
-            {visibleNewsCount < watchLaterNews.length && (
+            {visibleNewsCount < favouriteNews.length && (
               <Motion.div
                 className="flex justify-center my-8"
                 initial={{ opacity: 0, y: 30 }}

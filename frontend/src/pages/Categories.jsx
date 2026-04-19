@@ -3,7 +3,7 @@ import { motion as Motion } from "framer-motion";
 import { FaChevronUp } from "react-icons/fa";
 import PrivateNavbar from "../components/PrivateNavbar";
 import NewsCard from "../components/NewsCard";
-import { getPlatformNews, getWatchLaterNews } from "../services/newsService";
+import { getFavouriteNews, getPlatformNews, getWatchLaterNews } from "../services/newsService";
 import {
   FaYoutube,
   FaFacebook,
@@ -41,6 +41,7 @@ export default function Categories() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const categoryNewsCache = useRef({});
   const [watchLaterItems, setWatchLaterItems] = useState([]);
+  const [favouriteItems, setFavouriteItems] = useState([]);
 
   const activePlatformTextClass = {
     youtube: "text-red-600",
@@ -113,6 +114,19 @@ export default function Categories() {
   }, []);
 
   useEffect(() => {
+    const fetchFavouriteItems = async () => {
+      try {
+        const data = await getFavouriteNews();
+        setFavouriteItems(Array.isArray(data) ? data : []);
+      } catch {
+        setFavouriteItems([]);
+      }
+    };
+
+    fetchFavouriteItems();
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     const prefetchOtherCategories = async () => {
@@ -167,6 +181,22 @@ export default function Categories() {
     const sourceUrl = String(newsItem?.source_url || newsItem?.url || "").trim().toLowerCase();
 
     return watchLaterItems.some((savedItem) => {
+      const savedNewsId = String(savedItem?.news_id || savedItem?._id || "").trim();
+      const savedSourceUrl = String(savedItem?.source_url || savedItem?.url || "").trim().toLowerCase();
+
+      if (newsId && savedNewsId && newsId === savedNewsId) {
+        return true;
+      }
+
+      return sourceUrl && savedSourceUrl && sourceUrl === savedSourceUrl;
+    });
+  };
+
+  const isFavouriteSaved = (newsItem) => {
+    const newsId = String(newsItem?._id || newsItem?.news_id || "").trim();
+    const sourceUrl = String(newsItem?.source_url || newsItem?.url || "").trim().toLowerCase();
+
+    return favouriteItems.some((savedItem) => {
       const savedNewsId = String(savedItem?.news_id || savedItem?._id || "").trim();
       const savedSourceUrl = String(savedItem?.source_url || savedItem?.url || "").trim().toLowerCase();
 
@@ -266,7 +296,12 @@ export default function Categories() {
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-8">
               {visibleNews.map((item, index) => (
-                <NewsCard key={item._id || index} news={item} watchLaterSaved={isWatchLaterSaved(item)} />
+                <NewsCard
+                  key={item._id || index}
+                  news={item}
+                  watchLaterSaved={isWatchLaterSaved(item)}
+                  favouriteSaved={isFavouriteSaved(item)}
+                />
               ))}
             </div>
 

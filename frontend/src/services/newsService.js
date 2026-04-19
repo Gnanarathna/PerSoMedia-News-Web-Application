@@ -328,3 +328,23 @@ export const getWatchLaterNews = async () => {
 
   return result.data || [];
 };
+
+export const getFavouriteNews = async () => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch("http://127.0.0.1:5000/api/news/me/favourites", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to fetch favourites");
+  }
+
+  return result.data || [];
+};

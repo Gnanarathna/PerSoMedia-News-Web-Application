@@ -4,7 +4,7 @@ import { motion as Motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { FaChevronUp } from "react-icons/fa";
 import { getAllNews } from "../services/newsService";
-import { getWatchLaterNews } from "../services/newsService";
+import { getFavouriteNews, getWatchLaterNews } from "../services/newsService";
 
 const INITIAL_VISIBLE_NEWS = 24;
 const LOAD_MORE_STEP = 20;
@@ -53,6 +53,7 @@ export default function Dashboard({ view = "home" }) {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [visibleNewsCount, setVisibleNewsCount] = useState(INITIAL_VISIBLE_NEWS);
   const [watchLaterItems, setWatchLaterItems] = useState([]);
+  const [favouriteItems, setFavouriteItems] = useState([]);
   const visibleNews = filteredNews.slice(0, visibleNewsCount);
 
   useEffect(() => {
@@ -94,6 +95,19 @@ export default function Dashboard({ view = "home" }) {
   }, []);
 
   useEffect(() => {
+    const fetchFavouriteItems = async () => {
+      try {
+        const data = await getFavouriteNews();
+        setFavouriteItems(Array.isArray(data) ? data : []);
+      } catch {
+        setFavouriteItems([]);
+      }
+    };
+
+    fetchFavouriteItems();
+  }, []);
+
+  useEffect(() => {
     const filtered = news.filter((item) =>
       item.title?.toLowerCase().includes(search.toLowerCase())
     );
@@ -132,6 +146,22 @@ export default function Dashboard({ view = "home" }) {
     const sourceUrl = String(newsItem?.source_url || newsItem?.url || "").trim().toLowerCase();
 
     return watchLaterItems.some((savedItem) => {
+      const savedNewsId = String(savedItem?.news_id || savedItem?._id || "").trim();
+      const savedSourceUrl = String(savedItem?.source_url || savedItem?.url || "").trim().toLowerCase();
+
+      if (newsId && savedNewsId && newsId === savedNewsId) {
+        return true;
+      }
+
+      return sourceUrl && savedSourceUrl && sourceUrl === savedSourceUrl;
+    });
+  };
+
+  const isFavouriteSaved = (newsItem) => {
+    const newsId = String(newsItem?._id || newsItem?.news_id || "").trim();
+    const sourceUrl = String(newsItem?.source_url || newsItem?.url || "").trim().toLowerCase();
+
+    return favouriteItems.some((savedItem) => {
       const savedNewsId = String(savedItem?.news_id || savedItem?._id || "").trim();
       const savedSourceUrl = String(savedItem?.source_url || savedItem?.url || "").trim().toLowerCase();
 
@@ -206,7 +236,11 @@ export default function Dashboard({ view = "home" }) {
                   whileHover={{ scale: 1.03 }}
                   transition={{ delay: 0.45 + index * 0.05, duration: 0.45, type: "spring", stiffness: 180 }}
                 >
-                  <NewsCard news={item} watchLaterSaved={isWatchLaterSaved(item)} />
+                  <NewsCard
+                    news={item}
+                    watchLaterSaved={isWatchLaterSaved(item)}
+                    favouriteSaved={isFavouriteSaved(item)}
+                  />
                 </Motion.div>
               ))}
             </div>
