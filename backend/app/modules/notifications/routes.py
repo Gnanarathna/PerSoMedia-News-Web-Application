@@ -2,7 +2,9 @@ from flask import Blueprint
 from .controller import (
     trigger_test_notification,
     get_notifications,
-    mark_notification_as_read
+    mark_notification_as_read,
+    delete_notification,
+    clear_notifications,
 )
 
 notifications_bp = Blueprint(
@@ -13,4 +15,6 @@ notifications_bp = Blueprint(
 
 notifications_bp.route("/test", methods=["POST"])(trigger_test_notification)
 notifications_bp.route("", methods=["GET"])(get_notifications)
+notifications_bp.route("", methods=["DELETE"])(clear_notifications)
 notifications_bp.route("/<notification_id>/read", methods=["PATCH"])(mark_notification_as_read)
+notifications_bp.route("/<notification_id>", methods=["DELETE"])(delete_notification)

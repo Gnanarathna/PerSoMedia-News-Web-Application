@@ -1,10 +1,43 @@
 import { Link } from "react-router-dom";
 import { FaBell, FaSearch, FaUserCircle } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { getUnreadNotificationCount } from "../services/notificationService";
 
 const MotionLink = motion(Link);
 
 export default function PrivateNavbar({ searchValue = "", onSearchChange, onSearch }) {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshCount = async () => {
+      try {
+        const count = await getUnreadNotificationCount();
+        if (active) {
+          setUnreadCount(count);
+        }
+      } catch {
+        // Keep navbar usable even if notifications API is temporarily unavailable.
+      }
+    };
+
+    refreshCount();
+    const handleNotificationsChanged = () => {
+      refreshCount();
+    };
+
+    window.addEventListener("notifications:changed", handleNotificationsChanged);
+    const intervalId = setInterval(refreshCount, 30000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+      window.removeEventListener("notifications:changed", handleNotificationsChanged);
+    };
+  }, []);
+
   const handleLogout = () => {
     const shouldLogout = window.confirm("Are you sure you want to logout?");
     if (!shouldLogout) {
@@ -60,15 +93,23 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
       </div>
 
       <div className="relative z-10 flex items-center gap-3">
-        <motion.button
-          type="button"
-          aria-label="Notifications"
-          className="rounded-xl border border-blue-200 bg-white/70 px-3 py-2 text-blue-700 transition hover:bg-blue-50"
+        <motion.div
           whileHover={{ y: -1 }}
           whileTap={{ scale: 0.96 }}
         >
-          <FaBell className="text-lg" />
-        </motion.button>
+          <Link
+            to="/notifications"
+            aria-label="Notifications"
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-blue-200 bg-white/70 text-blue-700 transition hover:bg-blue-50"
+          >
+            <FaBell className="text-lg" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border border-white bg-red-500 px-1 text-[11px] font-bold leading-none text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
+        </motion.div>
         <motion.div
           className="flex items-center gap-2 rounded-xl border border-blue-200 bg-white/70 px-3 py-2 text-slate-800"
           whileHover={{ y: -1 }}
