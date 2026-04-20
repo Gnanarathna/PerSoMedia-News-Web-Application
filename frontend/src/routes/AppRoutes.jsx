@@ -8,6 +8,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import WatchLater from "../pages/WatchLater";
 import Favourites from "../pages/Favourites";
 import Notifications from "../pages/Notifications";
+import FakeDetect from "../pages/FakeDetect";
 
 export default function AppRoutes() {
   return (
@@ -60,6 +61,14 @@ export default function AppRoutes() {
         element={(
           <ProtectedRoute>
             <Notifications />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/detect"
+        element={(
+          <ProtectedRoute>
+            <FakeDetect />
           </ProtectedRoute>
         )}
       />

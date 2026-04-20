@@ -90,7 +90,7 @@ export default function WatchLater() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_32%),linear-gradient(180deg,_#f8fafc_0%,_#eef2f7_48%,_#e5e7eb_100%)]">
+    <Motion.div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_32%),linear-gradient(180deg,_#f8fafc_0%,_#eef2f7_48%,_#e5e7eb_100%)]" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
       <PrivateNavbar />
 
       <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
@@ -196,6 +196,6 @@ export default function WatchLater() {
           </Motion.button>
         )}
       </div>
-    </div>
+    </Motion.div>
   );
 }
