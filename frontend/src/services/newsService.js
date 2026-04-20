@@ -161,10 +161,12 @@ export const getPlatformNews = async (platform) => {
 };
 
 export const analyzeNews = async (newsItem) => {
+  const token = localStorage.getItem("token");
   const response = await fetch("http://127.0.0.1:5000/api/fake-detection/analyze", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
       title: newsItem.title,
@@ -177,6 +179,8 @@ export const analyzeNews = async (newsItem) => {
   if (!response.ok) {
     throw new Error(result.message || "Failed to analyze news");
   }
+
+  window.dispatchEvent(new Event("notifications:changed"));
 
   return result.data;
 };

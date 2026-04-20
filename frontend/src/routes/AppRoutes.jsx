@@ -7,6 +7,7 @@ import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import WatchLater from "../pages/WatchLater";
 import Favourites from "../pages/Favourites";
+import Notifications from "../pages/Notifications";
 
 export default function AppRoutes() {
   return (
@@ -51,6 +52,14 @@ export default function AppRoutes() {
         element={(
           <ProtectedRoute>
             <Favourites />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/notifications"
+        element={(
+          <ProtectedRoute>
+            <Notifications />
           </ProtectedRoute>
         )}
       />

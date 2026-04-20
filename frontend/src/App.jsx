@@ -4,7 +4,8 @@ import { useLocation } from "react-router-dom";
 
 export default function App() {
   const { pathname } = useLocation();
-  const hidePublicNavbar = pathname.startsWith("/dashboard");
+  const hidePublicNavbar =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/notifications");
 
   return (
     <div>
