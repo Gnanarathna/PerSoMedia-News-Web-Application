@@ -38,8 +38,18 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white min-h-screen flex flex-col">
-      <section className="text-center px-6 py-12 flex flex-col items-center justify-center">
+    <Motion.div
+      className="min-h-screen bg-white flex flex-col"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.55, ease: "easeOut" }}
+    >
+      <Motion.section
+        className="text-center px-6 py-12 flex flex-col items-center justify-center"
+        initial={{ opacity: 0, y: 22 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, ease: "easeOut" }}
+      >
         <Motion.h1
           initial={{ opacity: 0, y: -40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -83,32 +93,41 @@ export default function Home() {
             Already have an Account
           </Motion.button>
         </Motion.div>
-      </section>
+      </Motion.section>
 
-    <div className="bg-[#D9E5F0] opacity-100" >
-      <section className="px-6 pb-24 flex-1">
-        <Motion.h2
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+      <Motion.div
+        className="bg-[#D9E5F0] opacity-100"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <Motion.section
+          className="px-6 pb-24 flex-1"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-4xl font-bold text-center mb-16"
+          transition={{ duration: 0.55 }}
         >
-          <br/>
-          Why Use PerSoMedia News?
-        </Motion.h2>
+          <Motion.h2
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-4xl font-bold text-center mb-16"
+          >
+            <br />
+            Why Use PerSoMedia News?
+          </Motion.h2>
 
-        <div className="grid md:grid-cols-3 gap-16 max-w-6xl mx-auto px-4">
-          {FEATURES.map((feature) => (
-            <FeatureCard key={feature.title} {...feature} />
-          ))}
-        </div>
-      </section>
+          <div className="grid md:grid-cols-3 gap-16 max-w-6xl mx-auto px-4">
+            {FEATURES.map((feature) => (
+              <FeatureCard key={feature.title} {...feature} />
+            ))}
+          </div>
+        </Motion.section>
 
-
-      <Footer />   
-    </div> 
-    </div>
-    
+        <Footer />
+      </Motion.div>
+    </Motion.div>
   );
 }

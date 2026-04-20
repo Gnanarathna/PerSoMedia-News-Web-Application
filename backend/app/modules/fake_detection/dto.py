@@ -5,7 +5,10 @@ def validate_fake_detection_request(data):
     title = data.get("title")
     content = data.get("content")
 
-    if not title or not content:
-        return False, "Title and content are required"
+    if not title:
+        return False, "Title is required"
+
+    if not content and not title.strip():
+        return False, "Title is required"
 
     return True, None

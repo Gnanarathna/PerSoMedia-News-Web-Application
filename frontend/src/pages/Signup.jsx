@@ -81,7 +81,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
+    <Motion.div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}>
       
       <Motion.div
         initial={{ scale: 0.8, opacity: 0 }}
@@ -219,6 +219,6 @@ export default function Signup() {
           <Link to="/login" className="text-blue-600 font-semibold">Login</Link>
         </p>
       </Motion.div>
-    </div>
+    </Motion.div>
   );
 }

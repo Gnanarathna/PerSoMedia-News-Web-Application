@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion as Motion } from "framer-motion";
 import { FaBell, FaCheckCircle } from "react-icons/fa";
 import PrivateNavbar from "../components/PrivateNavbar";
 import {
@@ -127,7 +128,7 @@ export default function Notifications() {
 	};
 
 	return (
-		<div className="min-h-screen bg-[#F5F5F5]">
+		<Motion.div className="min-h-screen bg-[#F5F5F5]" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
 			<PrivateNavbar />
 
 			<div className="mx-auto max-w-5xl px-6 py-8 sm:px-10">
@@ -245,6 +246,6 @@ export default function Notifications() {
 					</div>
 				)}
 			</div>
-		</div>
+		</Motion.div>
 	);
 }

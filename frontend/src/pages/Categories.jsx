@@ -43,134 +43,65 @@ export default function Categories() {
   const [watchLaterItems, setWatchLaterItems] = useState([]);
   const [favouriteItems, setFavouriteItems] = useState([]);
 
-  const activePlatformTextClass = {
-    youtube: "text-red-600",
-    facebook: "text-blue-600",
-    instagram: "text-pink-600",
-    tiktok: "text-slate-900",
-    x: "text-slate-900",
-  }[selectedCategory] || "text-blue-700";
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const [watchLater, favourites] = await Promise.all([
+          getWatchLaterNews(),
+          getFavouriteNews()
+        ]);
+        setWatchLaterItems(watchLater || []);
+        setFavouriteItems(favourites || []);
+      } catch (err) {
+        console.error("Error fetching user news data:", err);
+      }
+    };
+    fetchUserData();
+  }, []);
 
-  const handleCategoryClick = (categoryName) => {
-    setSelectedCategory(categoryName);
+  const fetchNews = async (category, isInitial = false) => {
+    if (isInitial) {
+      if (categoryNewsCache.current[category]) {
+        setNews(categoryNewsCache.current[category]);
+        return;
+      }
+      setLoading(true);
+    }
+    setError("");
 
-    const cachedNews = categoryNewsCache.current[categoryName];
-    if (Array.isArray(cachedNews)) {
-      setNews(sortByLatestPublished(cachedNews));
-      setVisibleCount(INITIAL_VISIBLE_COUNT);
-      setError("");
+    const startTime = Date.now();
+    try {
+      const data = await getPlatformNews(category);
+      const sortedData = sortByLatestPublished(data || []);
+      categoryNewsCache.current[category] = sortedData;
+      setNews(sortedData);
+    } catch (err) {
+      setError(err?.message || "Failed to fetch news");
+    } finally {
+      if (isInitial) {
+        const duration = Date.now() - startTime;
+        const remaining = Math.max(0, MIN_LOADING_DURATION_MS - duration);
+        setTimeout(() => setLoading(false), remaining);
+      }
     }
   };
 
   useEffect(() => {
-    const fetchCategoryNews = async () => {
-      const startedAt = Date.now();
-
-      try {
-        setLoading(true);
-        setError("");
-
-        const cachedNews = categoryNewsCache.current[selectedCategory];
-        if (Array.isArray(cachedNews)) {
-          setNews(sortByLatestPublished(cachedNews));
-          setVisibleCount(INITIAL_VISIBLE_COUNT);
-          return;
-        }
-
-        const data = await getPlatformNews(selectedCategory);
-        const sortedData = sortByLatestPublished(data);
-        categoryNewsCache.current[selectedCategory] = sortedData;
-        setNews(sortedData);
-        setVisibleCount(INITIAL_VISIBLE_COUNT);
-      } catch (err) {
-        setError(err.message);
-        setNews([]);
-        setVisibleCount(INITIAL_VISIBLE_COUNT);
-      } finally {
-        const elapsed = Date.now() - startedAt;
-        const remaining = MIN_LOADING_DURATION_MS - elapsed;
-        if (remaining > 0) {
-          await new Promise((resolve) => setTimeout(resolve, remaining));
-        }
-
-        setLoading(false);
-      }
-    };
-
-    fetchCategoryNews();
+    fetchNews(selectedCategory, true);
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
   }, [selectedCategory]);
 
   useEffect(() => {
-    const fetchWatchLaterItems = async () => {
-      try {
-        const data = await getWatchLaterNews();
-        setWatchLaterItems(Array.isArray(data) ? data : []);
-      } catch {
-        setWatchLaterItems([]);
-      }
-    };
-
-    fetchWatchLaterItems();
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const fetchFavouriteItems = async () => {
-      try {
-        const data = await getFavouriteNews();
-        setFavouriteItems(Array.isArray(data) ? data : []);
-      } catch {
-        setFavouriteItems([]);
-      }
-    };
-
-    fetchFavouriteItems();
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const prefetchOtherCategories = async () => {
-      const categoryNames = CATEGORIES.map((category) => category.name);
-      const prefetched = await Promise.allSettled(
-        categoryNames
-          .filter((name) => name !== selectedCategory)
-          .filter((name) => !Array.isArray(categoryNewsCache.current[name]))
-          .map(async (name) => {
-            const data = await getPlatformNews(name);
-            return { name, data };
-          })
-      );
-
-      if (cancelled) {
-        return;
-      }
-
-      prefetched.forEach((result) => {
-        if (result.status === "fulfilled") {
-          categoryNewsCache.current[result.value.name] = sortByLatestPublished(result.value.data);
-        }
-      });
-    };
-
-    prefetchOtherCategories();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCategory]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 500);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  const handleCategoryClick = (categoryName) => {
+    if (categoryName !== selectedCategory) {
+      setSelectedCategory(categoryName);
+    }
+  };
 
   const handleScrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -209,11 +140,22 @@ export default function Categories() {
   };
 
   const visibleNews = news.slice(0, visibleCount);
+  const activePlatformTextClass = {
+    youtube: "text-red-600",
+    facebook: "text-blue-600",
+    instagram: "text-pink-600",
+    tiktok: "text-slate-900",
+    x: "text-slate-900",
+  }[selectedCategory] || "text-blue-600";
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#f8fbff_0%,_#eef4ff_35%,_#f5f5f5_70%)]">
+    <Motion.div
+      className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#f8fbff_0%,_#eef4ff_35%,_#f5f5f5_70%)]"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <PrivateNavbar />
-
       <div className="mx-auto w-full max-w-[1500px] px-4 py-8 sm:px-6 lg:px-10">
         <Motion.section
           initial={{ opacity: 0, y: 18 }}
@@ -233,7 +175,6 @@ export default function Categories() {
                 Browse platform-based news feeds and explore the latest updates with a focused, clean reading view.
               </p>
             </div>
-
             <div className="inline-flex items-center rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 shadow-sm">
               Active:
               <span className={`ml-1 capitalize ${activePlatformTextClass}`}>{selectedCategory}</span>
@@ -241,76 +182,95 @@ export default function Categories() {
           </div>
         </Motion.section>
 
-        <section className="mb-8">
+        <Motion.section
+          className="mb-8"
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+        >
           <div className="flex flex-wrap gap-3 sm:gap-4">
-          {CATEGORIES.map((category) => (
-            <button
-              key={category.name}
-              onClick={() => handleCategoryClick(category.name)}
-              aria-pressed={selectedCategory === category.name}
-              className={`group relative isolate overflow-hidden flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all duration-300 backdrop-blur-xl sm:px-6 sm:py-3 ${
-                selectedCategory === category.name
-                  ? "bg-white/75 text-slate-900 border-white/90 shadow-[0_12px_28px_rgba(30,64,175,0.24)] ring-1 ring-blue-300/40"
-                  : "bg-white/50 text-slate-800 border-white/70 shadow-[0_6px_18px_rgba(15,23,42,0.10)] hover:bg-white/75 hover:border-white/90 hover:shadow-[0_12px_26px_rgba(14,116,144,0.22)] hover:-translate-y-0.5"
-              }`}
-            >
-              <span
-                className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/70 via-white/15 to-transparent transition-opacity duration-300 ${
-                  selectedCategory === category.name ? "opacity-100" : "opacity-70 group-hover:opacity-100"
+            {CATEGORIES.map((category) => (
+              <button
+                key={category.name}
+                onClick={() => handleCategoryClick(category.name)}
+                aria-pressed={selectedCategory === category.name}
+                className={`group relative isolate overflow-hidden flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all duration-300 backdrop-blur-xl sm:px-6 sm:py-3 ${
+                  selectedCategory === category.name
+                    ? "bg-white/75 text-slate-900 border-white/90 shadow-[0_12px_28px_rgba(30,64,175,0.24)] ring-1 ring-blue-300/40"
+                    : "bg-white/50 text-slate-800 border-white/70 shadow-[0_6px_18px_rgba(15,23,42,0.10)] hover:bg-white/75 hover:border-white/90 hover:shadow-[0_12px_26px_rgba(14,116,144,0.22)] hover:-translate-y-0.5"
                 }`}
-              />
-              <span className="relative z-10 transition-transform duration-300 group-hover:scale-110">
-                {category.icon}
-              </span>
-              <span className="relative z-10 font-semibold text-base tracking-tight sm:text-lg">{category.label}</span>
-            </button>
-          ))}
+              >
+                <span
+                  className={`pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-white/70 via-white/15 to-transparent transition-opacity duration-300 ${
+                    selectedCategory === category.name ? "opacity-100" : "opacity-70 group-hover:opacity-100"
+                  }`}
+                />
+                <span className="relative z-10 transition-transform duration-300 group-hover:scale-110">
+                  {category.icon}
+                </span>
+                <span className="relative z-10 font-semibold text-base tracking-tight sm:text-lg">{category.label}</span>
+              </button>
+            ))}
           </div>
-        </section>
+        </Motion.section>
 
-        {/* Loading */}
         {loading && (
           <div className="mt-14 flex justify-center">
             <div className="h-12 w-12 animate-spin rounded-full border-b-4 border-blue-600"></div>
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div className="mt-8 rounded-2xl border border-red-200 bg-red-50/80 px-5 py-4 text-center text-red-600 shadow-sm">
             {error}
           </div>
         )}
 
-        {/* Empty */}
         {!loading && !error && news.length === 0 && (
-          <div className="mt-16 text-center">
+          <Motion.div
+            className="mt-16 text-center"
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
             <p className="text-2xl font-semibold text-gray-600">
               No {selectedCategory} news found
             </p>
-          </div>
+          </Motion.div>
         )}
 
-        {/* News Grid */}
         {!loading && !error && news.length > 0 && (
           <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-8">
+            <Motion.div
+              className="grid grid-cols-1 gap-6 mt-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.35 }}
+            >
               {visibleNews.map((item, index) => (
-                <NewsCard
+                <Motion.div
                   key={item._id || index}
-                  news={item}
-                  watchLaterSaved={isWatchLaterSaved(item)}
-                  favouriteSaved={isFavouriteSaved(item)}
-                />
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.03, duration: 0.35 }}
+                >
+                  <NewsCard
+                    news={item}
+                    watchLaterSaved={isWatchLaterSaved(item)}
+                    favouriteSaved={isFavouriteSaved(item)}
+                  />
+                </Motion.div>
               ))}
-            </div>
+            </Motion.div>
 
             {visibleCount < news.length && (
               <Motion.div
                 className="flex justify-center my-8"
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
+                transition={{ delay: 0.25, duration: 0.45 }}
               >
                 <Motion.button
                   type="button"
@@ -355,6 +315,6 @@ export default function Categories() {
           <FaChevronUp className="h-3.5 w-3.5" />
         </Motion.button>
       )}
-    </div>
+    </Motion.div>
   );
 }
