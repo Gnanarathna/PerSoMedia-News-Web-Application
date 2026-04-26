@@ -1,9 +1,10 @@
 from datetime import datetime
 
 
-def build_detection_document(title, content, result, user_id=None):
+def build_detection_document(title, content, result, user_id=None, platform=None):
     return {
         "user_id": str(user_id) if user_id is not None else None,
+        "platform": str(platform).lower().strip() if platform else None,
         "title": title,
         "content": content,
         "real_score": result.get("real_score"),

@@ -169,8 +169,10 @@ export const analyzeNews = async (newsItem) => {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
+      news_id: newsItem._id || newsItem.news_id || newsItem.source_url || null,
       title: newsItem.title,
       content: newsItem.content || newsItem.title,
+      platform: newsItem.platform || "unknown",
     }),
   });
 
@@ -351,4 +353,23 @@ export const getFavouriteNews = async () => {
   }
 
   return result.data || [];
+};
+
+export const trackNewsView = async (newsItem) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return;
+  }
+
+  await fetch(`${NEWS_API}/events/view`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      news_id: newsItem?._id || newsItem?.news_id || null,
+      platform: newsItem?.platform || "unknown",
+    }),
+  });
 };

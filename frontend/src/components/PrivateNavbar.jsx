@@ -64,6 +64,7 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
         <PrivateNavLink to="/dashboard" label="Home" />
         <PrivateNavLink to="/dashboard/categories" label="Categories" />
         <PrivateNavLink to="/detect" label="Detect Fake News" />
+        <PrivateNavLink to="/analytics" label="Analytics" />
         <PrivateNavLink to="/dashboard/watchlater" label="Watch later" />
         <PrivateNavLink to="/dashboard/favorites" label="Favourites" />
         <div className="flex items-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm shadow-slate-200/50">

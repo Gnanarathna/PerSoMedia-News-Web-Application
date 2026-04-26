@@ -1,12 +1,29 @@
 from flask import request, current_app
 from bson import ObjectId
 from bson.errors import InvalidId
+from datetime import datetime
 from .service import analyze_news_service
 from .dto import validate_fake_detection_request
 from app.core.extensions import mongo
 from app.core.response import success_response, error_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.modules.notifications.events import send_notification
+from app.modules.interactions.service import save_interaction
+
+
+def _track_platform_check(user_id, platform):
+    if not user_id or not platform:
+        return
+
+    try:
+        mongo.db.platform_activity.insert_one({
+            "user_id": str(user_id),
+            "platform": str(platform).strip().lower(),
+            "event_type": "check",
+            "created_at": datetime.utcnow(),
+        })
+    except Exception as e:
+        current_app.logger.warning(f"Failed to track check activity: {str(e)}")
 
 
 @jwt_required()
@@ -20,8 +37,20 @@ def analyze_news():
 
     title = data.get("title")
     content = data.get("content")
+    platform = data.get("platform")
+    news_id = data.get("news_id")
 
-    result = analyze_news_service(title, content, user_id=user_id)
+    result = analyze_news_service(title, content, user_id=user_id, platform=platform)
+    _track_platform_check(user_id, platform)
+    save_interaction(
+        user_id=user_id,
+        news_id=news_id,
+        platform=platform,
+        action_type="check",
+        checked=1,
+        real_score=result.get("real_score", 0),
+        fake_score=result.get("fake_score", 0),
+    )
 
     short_title = (title or "news").strip()
     if len(short_title) > 70:

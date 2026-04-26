@@ -9,6 +9,7 @@ import WatchLater from "../pages/WatchLater";
 import Favourites from "../pages/Favourites";
 import Notifications from "../pages/Notifications";
 import FakeDetect from "../pages/FakeDetect";
+import Analytics from "../pages/Analytics";
 
 export default function AppRoutes() {
   return (
@@ -69,6 +70,14 @@ export default function AppRoutes() {
         element={(
           <ProtectedRoute>
             <FakeDetect />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/analytics"
+        element={(
+          <ProtectedRoute>
+            <Analytics />
           </ProtectedRoute>
         )}
       />

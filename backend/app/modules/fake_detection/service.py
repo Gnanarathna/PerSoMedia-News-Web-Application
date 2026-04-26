@@ -41,7 +41,7 @@ def _build_default_result(title, summary_message):
     }
 
 
-def analyze_news_service(title, content, user_id=None):
+def analyze_news_service(title, content, user_id=None, platform=None):
     client = OpenAI(api_key=current_app.config["OPENAI_API_KEY"])
     content_text = (content or "").strip() or "Not provided by the user. Analyze primarily from the title and any URL cues."
 
@@ -140,7 +140,13 @@ Rules:
             "AI response could not be processed correctly.",
         )
 
-    detection_document = build_detection_document(title, content, result, user_id=user_id)
+    detection_document = build_detection_document(
+        title,
+        content,
+        result,
+        user_id=user_id,
+        platform=platform,
+    )
 
     try:
         db = mongo.db
