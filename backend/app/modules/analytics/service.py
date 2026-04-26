@@ -1,19 +1,165 @@
+import os
+
+import joblib
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
 from app.core.extensions import mongo
 from flask import current_app
 
+MODEL_DIR = "models"
+os.makedirs(MODEL_DIR, exist_ok=True)
 
-def get_platform_usage():
+
+def get_personalized_analytics(user_id):
+    rows = list(
+        mongo.db.interactions.find({
+            "user_id": str(user_id)
+        })
+    )
+
+    count = len(rows)
+
+    if count < 10:
+        return cold_start(rows)
+
+    return model_ready(user_id, rows)
+
+
+def cold_start(rows):
+    platform_count = {}
+
+    for row in rows:
+        platform = row.get("platform", "unknown")
+
+        platform_count[platform] = (
+            platform_count.get(platform, 0) + 1
+        )
+
+    preferred = "No data"
+
+    if platform_count:
+        preferred = max(
+            platform_count,
+            key=platform_count.get
+        )
+
+    return {
+        "mode": "cold_start",
+        "records": len(rows),
+        "preferred_platform": preferred,
+        "message": "Use the app more to unlock AI predictions"
+    }
+
+
+def model_ready(user_id, rows):
+    df = pd.DataFrame(rows)
+
+    if "platform" not in df or df["platform"].isna().all():
+        return {
+            "mode": "cold_start",
+            "records": len(rows),
+            "preferred_platform": "No data",
+            "message": "Use the app more to unlock AI predictions"
+        }
+
+    df["platform"] = df["platform"].fillna("unknown")
+
+    # Encode target
+    encoder = LabelEncoder()
+    df["target"] = encoder.fit_transform(df["platform"])
+
+    # LogisticRegression needs at least two classes in training labels.
+    if df["target"].nunique() < 2:
+        return {
+            "mode": "cold_start",
+            "records": len(rows),
+            "preferred_platform": df["platform"].iloc[0],
+            "message": "Use the app more to unlock AI predictions"
+        }
+
+    # Features
+    feature_columns = [
+        "checked",
+        "watch_later",
+        "favourite",
+        "real_score",
+        "fake_score",
+        "hour",
+        "day"
+    ]
+
+    for column in feature_columns:
+        if column not in df:
+            df[column] = 0
+
+    X = df[feature_columns].fillna(0)
+    y = df["target"]
+
+    # Train/Test Split (80/20)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    # Train Model on training data only
+    model = LogisticRegression(max_iter=500)
+    model.fit(X_train, y_train)
+
+    # Calculate accuracy on test data (unseen data)
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    accuracy_percent = round(accuracy * 100, 2)
+
+    # Save files
+    model_path = f"{MODEL_DIR}/user_{user_id}.pkl"
+    encoder_path = f"{MODEL_DIR}/user_{user_id}_encoder.pkl"
+
+    joblib.dump(model, model_path)
+    joblib.dump(encoder, encoder_path)
+
+    # Predict next preference using latest row
+    latest = X.tail(1)
+    pred = model.predict(latest)[0]
+    prob = max(model.predict_proba(latest)[0])
+
+    label = encoder.inverse_transform([pred])[0]
+    confidence = round(prob * 100, 2)
+
+    return {
+        "mode": "model",
+        "records": len(rows),
+        "recommended_platform": label,
+        "confidence": f"{confidence}%",
+        "accuracy": f"{accuracy_percent}%",
+        "message": "AI personalized prediction active"
+    }
+
+
+def get_platform_usage(user_id):
     try:
+        user_filter = str(user_id)
         pipeline = [
+            {
+                "$match": {
+                    "user_id": user_filter,
+                    "platform": {"$exists": True, "$ne": None}
+                }
+            },
             {
                 "$group": {
                     "_id": "$platform",
                     "count": {"$sum": 1}
                 }
+            },
+            {
+                "$sort": {"count": -1}
             }
         ]
 
-        result = list(mongo.db.news.aggregate(pipeline))
+        result = list(mongo.db.platform_activity.aggregate(pipeline))
 
         formatted = []
         for item in result:
@@ -29,9 +175,11 @@ def get_platform_usage():
         return []
 
 
-def get_fake_real_stats():
+def get_fake_real_stats(user_id):
     try:
-        checked_items = list(mongo.db.news.find({"is_checked": True}))
+        checked_items = list(
+            mongo.db.fake_detections.find({"user_id": str(user_id)})
+        )
 
         total_checked = len(checked_items)
         real_count = 0
@@ -61,21 +209,28 @@ def get_fake_real_stats():
         }
 
 
-def get_checked_news_by_platform():
+def get_checked_news_by_platform(user_id):
     try:
+        user_filter = str(user_id)
         pipeline = [
             {
-                "$match": {"is_checked": True}
+                "$match": {
+                    "user_id": user_filter,
+                    "platform": {"$exists": True, "$ne": None}
+                }
             },
             {
                 "$group": {
                     "_id": "$platform",
                     "checked_count": {"$sum": 1}
                 }
+            },
+            {
+                "$sort": {"checked_count": -1}
             }
         ]
 
-        result = list(mongo.db.news.aggregate(pipeline))
+        result = list(mongo.db.platform_activity.aggregate(pipeline))
 
         formatted = []
         for item in result:
@@ -93,10 +248,10 @@ def get_checked_news_by_platform():
         return []
 
 
-def get_top_fake_news(limit=5):
+def get_top_fake_news(user_id, limit=5):
     try:
         fake_news = list(
-            mongo.db.news.find({"is_checked": True})
+            mongo.db.fake_detections.find({"user_id": str(user_id)})
             .sort("fake_score", -1)
             .limit(limit)
         )
@@ -119,11 +274,11 @@ def get_top_fake_news(limit=5):
         return []
 
 
-def get_recent_analyzed_news(limit=5):
+def get_recent_analyzed_news(user_id, limit=5):
     try:
         recent_news = list(
-            mongo.db.news.find({"is_checked": True})
-            .sort("published_at", -1)
+            mongo.db.fake_detections.find({"user_id": str(user_id)})
+            .sort("analyzed_at", -1)
             .limit(limit)
         )
 
@@ -133,7 +288,7 @@ def get_recent_analyzed_news(limit=5):
                 "id": str(item["_id"]),
                 "title": item.get("title"),
                 "platform": item.get("platform"),
-                "published_at": item.get("published_at"),
+                "analyzed_at": item.get("analyzed_at"),
                 "fake_score": item.get("fake_score"),
                 "real_score": item.get("real_score")
             })

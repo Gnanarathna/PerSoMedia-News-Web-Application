@@ -16,6 +16,7 @@ import {
   removeFromWatchLater,
   removeFromFavourite,
   analyzeNews,
+  trackNewsView,
 } from "../services/newsService";
 
 export default function NewsCard({
@@ -74,6 +75,11 @@ export default function NewsCard({
   const handleViewNews = () => {
     const targetUrl = news.source_url || news.url;
     if (!targetUrl) return;
+
+    trackNewsView(news).catch(() => {
+      // Keep navigation fast even if tracking fails.
+    });
+
     window.open(targetUrl, "_blank", "noopener,noreferrer");
   };
 

@@ -4,8 +4,10 @@ from .service import get_platform_news
 from app.core.extensions import mongo
 from bson import ObjectId
 from app.modules.fake_detection.service import analyze_news_service
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from app.core.response import success_response, error_response
+from datetime import datetime
+from app.modules.interactions.service import save_interaction
 
 
 def _service_response(response, status):
@@ -45,6 +47,28 @@ def _dedupe_news_items(items):
         unique_items.append(item)
 
     return unique_items
+
+
+def _track_platform_activity(user_id, platform, event_type):
+    if not user_id or not platform:
+        return
+
+    try:
+        mongo.db.platform_activity.insert_one({
+            "user_id": str(user_id),
+            "platform": str(platform).strip().lower(),
+            "event_type": event_type,
+            "created_at": datetime.utcnow(),
+        })
+    except Exception as e:
+        current_app.logger.warning(f"Failed to track platform activity: {str(e)}")
+
+
+def _save_interaction(user_id, news_id, platform, action_type, **kwargs):
+    try:
+        save_interaction(user_id, news_id, platform, action_type, **kwargs)
+    except Exception as e:
+        current_app.logger.warning(f"Failed to save interaction: {str(e)}")
 
 
 class NewsController:
@@ -89,6 +113,15 @@ class NewsController:
         user_id = get_jwt_identity()
         data = request.get_json()
         response, status = NewsService.add_to_watch_later(user_id, data)
+        if status < 400 and isinstance(data, dict):
+            _track_platform_activity(user_id, data.get("platform"), "watch_later")
+            _save_interaction(
+                user_id,
+                data.get("news_id"),
+                data.get("platform"),
+                "watch_later",
+                watch_later=1,
+            )
         return _service_response(response, status)
 
     @staticmethod
@@ -111,6 +144,15 @@ class NewsController:
         user_id = get_jwt_identity()
         data = request.get_json()
         response, status = NewsService.add_to_favourites(user_id, data)
+        if status < 400 and isinstance(data, dict):
+            _track_platform_activity(user_id, data.get("platform"), "favourite")
+            _save_interaction(
+                user_id,
+                data.get("news_id"),
+                data.get("platform"),
+                "favourite",
+                favourite=1,
+            )
         return _service_response(response, status)
 
     @staticmethod
@@ -247,6 +289,8 @@ def get_analyzed_news():
 
 def get_platform_related_news(platform):
     try:
+        verify_jwt_in_request(optional=True)
+        user_id = get_jwt_identity()
         normalized_platform = (platform or "").strip().lower()
 
         if normalized_platform == "youtube":
@@ -255,6 +299,9 @@ def get_platform_related_news(platform):
             news = _dedupe_news_items([*youtube_api_news, *news_api_news])
         else:
             news = get_platform_news(normalized_platform)
+
+        _track_platform_activity(user_id, normalized_platform, "platform_visit")
+        _save_interaction(user_id, None, normalized_platform, "view")
 
         return success_response(news, f"{platform.capitalize()} news fetched successfully", 200)
     except ValueError as e:
@@ -276,3 +323,18 @@ def get_tiktok_related_news():
 
 def get_x_related_news():
     return get_platform_related_news("x")
+
+
+@jwt_required()
+def track_news_view():
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+    platform = data.get("platform")
+    news_id = data.get("news_id")
+
+    if not platform:
+        return error_response("Platform is required", 400)
+
+    _track_platform_activity(user_id, platform, "view")
+    _save_interaction(user_id, news_id, platform, "view")
+    return success_response(None, "View activity tracked", 200)

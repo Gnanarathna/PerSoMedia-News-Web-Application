@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from app.modules.news.controller import NewsController
-from .controller import get_youtube_trending, get_saved_news, get_saved_youtube_news, analyze_saved_news, get_analyzed_news, get_platform_related_news, get_instagram_related_news, get_tiktok_related_news, get_x_related_news
+from .controller import get_youtube_trending, get_saved_news, get_saved_youtube_news, analyze_saved_news, get_analyzed_news, get_platform_related_news, get_instagram_related_news, get_tiktok_related_news, get_x_related_news, track_news_view
 
 news_bp = Blueprint("news", __name__)
 
@@ -30,3 +30,4 @@ news_bp.route("/platform/<platform>", methods=["GET"])(get_platform_related_news
 news_bp.route("/instagram/trending", methods=["GET"])(get_instagram_related_news)
 news_bp.route("/tiktok/trending", methods=["GET"])(get_tiktok_related_news)
 news_bp.route("/x/trending", methods=["GET"])(get_x_related_news)
+news_bp.route("/events/view", methods=["POST"])(track_news_view)

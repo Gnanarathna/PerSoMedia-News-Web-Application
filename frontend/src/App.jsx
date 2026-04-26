@@ -4,12 +4,12 @@ import { useLocation } from "react-router-dom";
 
 export default function App() {
   const { pathname } = useLocation();
-  const hidePublicNavbar =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/notifications") || pathname.startsWith("/detect");
+  const hideNavbar =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/notifications") || pathname.startsWith("/detect") || pathname.startsWith("/analytics");
 
   return (
     <div>
-      {!hidePublicNavbar && <Navbar />}
+      {!hideNavbar && <Navbar />}
       <AppRoutes />
     </div>
   );
