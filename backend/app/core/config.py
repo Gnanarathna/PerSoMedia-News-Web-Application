@@ -12,3 +12,7 @@ class Config:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
     NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+    SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
+    SENDGRID_REPLY_TO_EMAIL = os.getenv("SENDGRID_REPLY_TO_EMAIL")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
