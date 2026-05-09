@@ -72,7 +72,7 @@ def model_ready(user_id, rows):
     encoder = LabelEncoder()
     df["target"] = encoder.fit_transform(df["platform"])
 
-    # LogisticRegression needs at least two classes in training labels.
+    # # Multinomial Logistic Regression requires at least two unique classes in the target variable
     if df["target"].nunique() < 2:
         return {
             "mode": "cold_start",

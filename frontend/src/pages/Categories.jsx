@@ -42,6 +42,7 @@ export default function Categories() {
   const categoryNewsCache = useRef({});
   const [watchLaterItems, setWatchLaterItems] = useState([]);
   const [favouriteItems, setFavouriteItems] = useState([]);
+  const fetchCategoryRef = useRef(null); // Track which category is currently being fetched
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -60,9 +61,15 @@ export default function Categories() {
   }, []);
 
   const fetchNews = async (category, isInitial = false) => {
+    // Mark this category as the one being fetched
+    fetchCategoryRef.current = category;
+
     if (isInitial) {
       if (categoryNewsCache.current[category]) {
-        setNews(categoryNewsCache.current[category]);
+        // Only update if this is still the selected category
+        if (fetchCategoryRef.current === category) {
+          setNews(categoryNewsCache.current[category]);
+        }
         return;
       }
       setLoading(true);
@@ -74,14 +81,26 @@ export default function Categories() {
       const data = await getPlatformNews(category);
       const sortedData = sortByLatestPublished(data || []);
       categoryNewsCache.current[category] = sortedData;
-      setNews(sortedData);
+      
+      // Only update news if this is still the category being fetched
+      if (fetchCategoryRef.current === category) {
+        setNews(sortedData);
+      }
     } catch (err) {
-      setError(err?.message || "Failed to fetch news");
+      // Only update error if this is still the category being fetched
+      if (fetchCategoryRef.current === category) {
+        setError(err?.message || "Failed to fetch news");
+      }
     } finally {
       if (isInitial) {
         const duration = Date.now() - startTime;
         const remaining = Math.max(0, MIN_LOADING_DURATION_MS - duration);
-        setTimeout(() => setLoading(false), remaining);
+        setTimeout(() => {
+          // Only stop loading if this is still the category being fetched
+          if (fetchCategoryRef.current === category) {
+            setLoading(false);
+          }
+        }, remaining);
       }
     }
   };
@@ -99,7 +118,10 @@ export default function Categories() {
 
   const handleCategoryClick = (categoryName) => {
     if (categoryName !== selectedCategory) {
+      // Immediately switch to the new category
       setSelectedCategory(categoryName);
+      // Mark that we're now fetching this new category
+      fetchCategoryRef.current = categoryName;
     }
   };
 

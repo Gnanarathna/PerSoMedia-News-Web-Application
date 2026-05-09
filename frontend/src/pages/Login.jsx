@@ -144,6 +144,13 @@ export default function Login() {
             {errors.password || "placeholder"}
           </p>
 
+          {/* Forgot Password Link */}
+          <div className="mb-4 flex justify-end">
+            <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-semibold">
+              Forgot password?
+            </Link>
+          </div>
+
           {/* Button */}
           <button
             type="button"

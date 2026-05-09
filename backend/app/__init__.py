@@ -12,9 +12,10 @@ from app.core.extensions import mongo, bcrypt, jwt, socketio
 from app.modules.notifications import notifications_bp
 from app.core.errors.logger import configure_logger
 from app.core.errors.handlers import register_error_handlers
+import os
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, static_url_path="/uploads", static_folder=os.path.join(os.path.dirname(__file__), "../uploads"))
     app.config.from_object(Config)
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
     CORS(app)
