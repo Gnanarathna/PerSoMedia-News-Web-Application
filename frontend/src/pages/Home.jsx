@@ -280,7 +280,7 @@ export default function Home() {
           initial={{ opacity: 0, y: -40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-5xl font-bold text-gray-900 leading-tight mb-4"
+          className="text-3xl sm:text-5xl font-bold text-gray-900 leading-tight mb-4"
         >
           Stay Updated with Trending <br />Viral News
         </Motion.h1>
@@ -294,7 +294,7 @@ export default function Home() {
           Create an account to access the full features of PerSoMedia News
         </Motion.p>
 
-        <Motion.div className="flex justify-center gap-12">
+        <Motion.div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-12">
           <Motion.button
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -339,13 +339,13 @@ export default function Home() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-4xl font-bold text-center mb-16"
+            className="text-2xl sm:text-4xl font-bold text-center mb-16"
           >
             <br />
             Why Use PerSoMedia News?
           </Motion.h2>
 
-          <div className="grid md:grid-cols-3 gap-16 max-w-6xl mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8 md:gap-16 max-w-6xl mx-auto px-4">
             {FEATURES.map((feature) => (
               <FeatureCard key={feature.title} {...feature} />
             ))}
@@ -370,10 +370,10 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="text-center"
             >
-              <h2 className="text-5xl font-bold text-gray-900 mb-6">
+              <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-6">
                 Explore News by Category
               </h2>
-              <p className="text-xl text-gray-600 leading-relaxed">
+              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
                 Dive into trending stories from your favorite social media platforms. Browse YouTube, Facebook, Instagram, TikTok, and X all in one place. Stay informed with curated content tailored to each platform's latest viral moments.
               </p>
             </Motion.div>
@@ -420,10 +420,27 @@ export default function Home() {
                     >
                       <div className="flex items-center gap-3 mb-6">
                         {category.icon}
-                        <h3 className="text-2xl font-bold text-gray-900">{category.label}</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900">{category.label}</h3>
                       </div>
 
-                    <div className="flex items-center gap-4">
+                      {/* Mobile: horizontal scroll-snap strip */}
+                      <div className="md:hidden">
+                        <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: "none" }}>
+                          {news.length > 0 ? news.map((newsItem) => (
+                            <div
+                              key={newsItem._id || newsItem.source_url}
+                              className="flex-shrink-0 w-[75vw] max-w-[280px] snap-start"
+                            >
+                              <CategoryNewsCard news={newsItem} />
+                            </div>
+                          )) : (
+                            <p className="text-gray-600 py-8">No news available for this category</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Desktop: arrow carousel */}
+                      <div className="hidden md:flex items-center gap-4">
                         {/* Left Arrow Button */}
                         <Motion.button
                           onClick={() => handleCarouselMove(category.name, "right")}
@@ -488,7 +505,7 @@ export default function Home() {
 
         <Motion.section
           id="about-section"
-          className="px-6 py-24 flex-1 bg-gradient-to-b from-blue-50 to-blue-100"
+          className="px-6 py-12 flex-1 bg-gradient-to-b from-blue-50 to-blue-100"
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -496,7 +513,7 @@ export default function Home() {
         >
           <div className="max-w-6xl mx-auto">
             {/* Hero Section */}
-            <div className="mb-20">
+            <div className="mb-8">
               <Motion.div
                 initial={{ opacity: 0, y: -30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -504,10 +521,10 @@ export default function Home() {
                 transition={{ duration: 0.6 }}
                 className="text-center"
               >
-                <h2 className="text-5xl font-bold text-gray-900 mb-6">
+                <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-6">
                   About Us
                 </h2>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
                   Empowering millions with accurate, timely, and personalized news from the world's most influential social media platforms
                 </p>
               </Motion.div>
@@ -517,7 +534,7 @@ export default function Home() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="mt-12 grid md:grid-cols-3 gap-8"
+                className="mt-6 grid md:grid-cols-3 gap-8"
               >
                 <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition">
                   <div className="text-4xl font-bold text-blue-600 mb-2">100+</div>
@@ -543,7 +560,7 @@ export default function Home() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="space-y-8 text-gray-700 text-lg leading-relaxed"
+              className="space-y-6 text-gray-700 text-lg leading-relaxed"
             >
               <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
@@ -570,30 +587,6 @@ export default function Home() {
                 <p className="text-lg font-semibold text-blue-900 text-center">
                   Join thousands of users who trust PerSoMedia News to deliver accurate, timely, and personalized news from across the social media landscape.
                 </p>
-              </div>
-
-              <div className="pt-8 border-t-2 border-gray-200">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6">Get In Touch</h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <p className="text-sm text-gray-600 uppercase tracking-wide font-semibold mb-2">Phone</p>
-                    <a 
-                      href="tel:+94719336762" 
-                      className="text-2xl text-blue-600 hover:text-blue-800 font-bold hover:underline"
-                    >
-                      +94 71 933 6762
-                    </a>
-                  </div>
-                  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <p className="text-sm text-gray-600 uppercase tracking-wide font-semibold mb-2">Email</p>
-                    <a 
-                      href="mailto:persomedianews@outlook.com" 
-                      className="text-2xl text-blue-600 hover:text-blue-800 font-bold hover:underline break-all"
-                    >
-                      persomedianews@outlook.com
-                    </a>
-                  </div>
-                </div>
               </div>
             </Motion.div>
           </div>

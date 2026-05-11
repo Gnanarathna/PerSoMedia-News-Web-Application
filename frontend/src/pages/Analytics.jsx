@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, CartesianGrid,
   LineChart, Line
 } from "recharts";
+import { FaChartBar, FaCheckCircle, FaExclamationTriangle, FaLightbulb } from "react-icons/fa";
 
 import {
   getPlatformUsage,
@@ -21,6 +22,13 @@ export default function Analytics() {
   const [checkedData, setCheckedData] = useState([]);
   const [personalized, setPersonalized] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const COLORS = ["#22c55e", "#ef4444"];
 
@@ -99,80 +107,90 @@ export default function Analytics() {
     <div className="min-h-screen bg-[#F5F5F5]">
       <PrivateNavbar />
 
-      <div className="px-10 py-8">
-        <h1 className="text-4xl font-bold mb-8">
+      <div className="px-4 sm:px-10 py-8">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-8 text-slate-800">
           Analytics Dashboard
         </h1>
 
         {/* Summary */}
-        <div className="grid grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-10">
           <Card
             title="Total Checked"
             value={stats.total_checked || 0}
+            icon={FaChartBar}
+            accentColor="text-blue-600"
+            bgColor="bg-blue-50"
           />
           <Card
             title="Mostly Real"
             value={stats.mostly_real || 0}
+            icon={FaCheckCircle}
+            accentColor="text-emerald-600"
+            bgColor="bg-emerald-50"
           />
           <Card
             title="Mostly Fake"
             value={stats.mostly_fake || 0}
+            icon={FaExclamationTriangle}
+            accentColor="text-red-600"
+            bgColor="bg-red-50"
           />
         </div>
 
         {personalized && (
-          <div className="bg-white rounded-2xl p-6 shadow-md mb-8">
-            <h2 className="text-2xl font-bold mb-4">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8 overflow-hidden relative">
+             <div className="absolute top-0 right-0 p-4 opacity-5 hidden sm:block">
+              <FaLightbulb size={80} />
+            </div>
+
+            <h2 className="text-xl font-bold mb-5 flex items-center gap-2 text-slate-800">
+              <FaLightbulb className="text-amber-500" />
               Personalized Insights
             </h2>
 
-            {personalized.mode === "cold_start" ? (
-              <>
-                <p>
-                  Preferred Platform:
-                  <b>
-                    {PLATFORM_NAMES[personalized.preferred_platform.toLowerCase()] || personalized.preferred_platform}
-                  </b>
-                </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {personalized.mode === "cold_start" ? (
+                <>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Preferred Platform</p>
+                    <p className="text-lg font-bold text-slate-700">
+                      {PLATFORM_NAMES[personalized.preferred_platform.toLowerCase()] || personalized.preferred_platform}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Records</p>
+                    <p className="text-lg font-bold text-slate-700">{personalized.records}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Recommended</p>
+                    <span
+                      className="mt-1 px-3 py-1 rounded-full text-white text-xs font-bold inline-block"
+                      style={{
+                        backgroundColor: PLATFORM_COLORS[personalized.recommended_platform.toLowerCase()] || PLATFORM_COLORS.unknown
+                      }}
+                    >
+                      {PLATFORM_NAMES[personalized.recommended_platform.toLowerCase()] || personalized.recommended_platform}
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Confidence Level</p>
+                    <p className="text-lg font-bold text-slate-700">{personalized.confidence}</p>
+                  </div>
+                </>
+              )}
+            </div>
 
-                <p>
-                  Records:
-                  {personalized.records}
-                </p>
-
-                <p className="text-gray-500 mt-2">
-                  {personalized.message}
-                </p>
-              </>
-            ) : (
-              <>
-                <p>
-                  Recommended Platform:
-                  <span
-                    className="ml-2 px-3 py-1 rounded-full text-white font-semibold inline-block"
-                    style={{
-                      backgroundColor: PLATFORM_COLORS[personalized.recommended_platform.toLowerCase()] || PLATFORM_COLORS.unknown
-                    }}
-                  >
-                    {PLATFORM_NAMES[personalized.recommended_platform.toLowerCase()] || personalized.recommended_platform}
-                  </span>
-                </p>
-
-                <p>
-                  Confidence:
-                  {personalized.confidence}
-                </p>
-
-                <p className="text-gray-500 mt-2">
-                  {personalized.message}
-                </p>
-              </>
-            )}
+            <div className="mt-4 p-4 rounded-xl bg-blue-50 border border-blue-100 text-blue-800 text-sm italic">
+              "{personalized.message}"
+            </div>
           </div>
         )}
 
         {/* Charts */}
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
 
           {/* Pie */}
           <div className="bg-white p-6 rounded-2xl shadow-md">
@@ -206,11 +224,18 @@ export default function Analytics() {
               Platform Usage
             </h2>
 
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={platformData}>
+            <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+              <BarChart data={platformData} margin={isMobile ? { bottom: 25 } : {}}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="platform" />
-                <YAxis />
+                <XAxis 
+                  dataKey="platform" 
+                  tick={isMobile ? { fontSize: 10 } : {}}
+                  angle={isMobile ? -45 : 0}
+                  textAnchor={isMobile ? "end" : "middle"}
+                  interval={0}
+                  height={isMobile ? 60 : 30}
+                />
+                <YAxis tick={isMobile ? { fontSize: 10 } : {}} />
                 <Tooltip />
                 <Bar
                   dataKey="count"
@@ -221,16 +246,23 @@ export default function Analytics() {
           </div>
 
           {/* Checked by Platform */}
-          <div className="bg-white p-6 rounded-2xl shadow-md col-span-2">
+          <div className="bg-white p-6 rounded-2xl shadow-md lg:col-span-2">
             <h2 className="text-xl font-semibold mb-4">
               Checked News by Platform
             </h2>
 
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={checkedData}>
+            <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
+              <LineChart data={checkedData} margin={isMobile ? { bottom: 25, right: 10 } : {}}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="platform" />
-                <YAxis />
+                <XAxis 
+                  dataKey="platform" 
+                  tick={isMobile ? { fontSize: 10 } : {}}
+                  angle={isMobile ? -45 : 0}
+                  textAnchor={isMobile ? "end" : "middle"}
+                  interval={0}
+                  height={isMobile ? 60 : 30}
+                />
+                <YAxis tick={isMobile ? { fontSize: 10 } : {}} />
                 <Tooltip />
                 <Line
                   type="monotone"
@@ -248,13 +280,19 @@ export default function Analytics() {
   );
 }
 
-function Card({ title, value }) {
+function Card({ title, value, icon, accentColor, bgColor }) {
+  const DisplayIcon = icon;
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-md text-center">
-      <p className="text-gray-500">{title}</p>
-      <h3 className="text-4xl font-bold mt-2">
-        {value}
-      </h3>
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center gap-4 transition-all hover:shadow-md">
+      <div className={`p-3 rounded-xl ${bgColor || "bg-slate-50"} ${accentColor || "text-slate-600"} flex-shrink-0`}>
+        {DisplayIcon && <DisplayIcon size={24} />}
+      </div>
+      <div className="text-left">
+        <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest leading-none">{title}</p>
+        <h3 className="text-xl sm:text-2xl font-black text-slate-800 mt-1">
+          {value}
+        </h3>
+      </div>
     </div>
   );
 }

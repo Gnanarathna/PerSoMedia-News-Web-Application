@@ -15,7 +15,7 @@ import {
   deleteAccount,
   forgotPassword,
 } from "../services/authService";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../context/useUser";
 
 export default function AccountSettings() {
   const [user, setUser] = useState(null);
@@ -141,7 +141,7 @@ export default function AccountSettings() {
       const response = await updateProfile({
         name: trimmedName,
       });
-      setUser(response);
+      setUser((prev) => ({ ...prev, ...response }));
       // Preserve and update the profile picture
       if (response.image) {
         setPreviewImage(response.image);
@@ -365,7 +365,7 @@ export default function AccountSettings() {
         transition={{ duration: 0.5 }}
         className="mx-auto max-w-5xl px-4 py-8"
       >
-        <h1 className="mb-8 text-3xl font-bold text-slate-800">Account Settings</h1>
+        <h1 className="mb-6 text-2xl sm:text-3xl font-bold text-slate-800">Account Settings</h1>
 
         {/* Alert Messages */}
         {error && (
@@ -400,7 +400,7 @@ export default function AccountSettings() {
             transition={{ duration: 0.5 }}
             className="lg:col-span-1"
           >
-            <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-lg">
+            <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-6 shadow-lg">
               <h3 className="mb-4 text-lg font-bold text-slate-800">Profile Picture</h3>
               {/* Profile Image */}
               <div className="mb-6 flex flex-col items-center">
@@ -517,7 +517,7 @@ export default function AccountSettings() {
             className="lg:col-span-2 space-y-6"
           >
             {/* Profile Information Form */}
-            <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-lg">
+            <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-6 shadow-lg">
               <h2 className="mb-2 text-xl font-bold text-slate-800">Profile Information</h2>
               <p className="mb-6 text-sm text-slate-500">Update your name and profile picture. Your current profile picture will be preserved while you make changes.</p>
 
@@ -544,7 +544,7 @@ export default function AccountSettings() {
                   <p className="mt-1 text-xs text-slate-500">Email cannot be changed</p>
                 </div>
 
-                <div className="flex gap-3 pt-2">
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <Motion.button
                     type="submit"
                     disabled={isSaving}
@@ -568,7 +568,7 @@ export default function AccountSettings() {
             </div>
 
             {/* Change Password Form */}
-            <div className="rounded-2xl border border-blue-200 bg-white p-6 shadow-lg">
+            <div className="rounded-2xl border border-blue-200 bg-white p-4 sm:p-6 shadow-lg">
               <h2 className="mb-6 text-xl font-bold text-slate-800">Change Password</h2>
 
               {user?.auth_provider === "google" ? (
@@ -770,7 +770,7 @@ export default function AccountSettings() {
               <img
                 src={previewImage}
                 alt="Profile preview"
-                className="max-h-96 max-w-96 rounded-2xl object-cover shadow-md"
+                className="w-full max-h-64 sm:max-h-96 rounded-2xl object-cover shadow-md"
               />
             </div>
             <p className="mt-4 text-center text-sm text-slate-500">

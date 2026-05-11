@@ -93,7 +93,7 @@ export default function Profile() {
           <div className="h-32 bg-gradient-to-r from-blue-500 to-blue-600" />
 
           {/* Profile Content */}
-          <div className="relative px-8 pb-8 pt-0">
+          <div className="relative px-4 sm:px-8 pb-8 pt-0">
             {/* Profile Image */}
             <div className="flex flex-col items-center">
               <Motion.div
@@ -153,7 +153,7 @@ export default function Profile() {
               </Motion.div>
 
               {/* User Info */}
-              <h1 className="text-3xl font-bold text-slate-800">{user?.name || "User"}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">{user?.name || "User"}</h1>
               <p className="mt-1 text-sm text-slate-500">Member Profile</p>
 
               {/* Info Grid */}
@@ -166,7 +166,7 @@ export default function Profile() {
                   <FaMailBulk className="text-xl text-blue-600" />
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase">Email</p>
-                    <p className="text-sm font-medium text-slate-800">{user?.email || "N/A"}</p>
+                    <p className="text-sm font-medium text-slate-800 break-all">{user?.email || "N/A"}</p>
                   </div>
                 </Motion.div>
 
@@ -251,7 +251,7 @@ export default function Profile() {
               <img
                 src={user.image}
                 alt="Profile preview"
-                className="max-h-96 max-w-96 rounded-2xl object-cover shadow-md"
+                className="w-full max-h-64 sm:max-h-96 rounded-2xl object-cover shadow-md"
               />
             </div>
             <p className="mt-4 text-center text-sm text-slate-500">

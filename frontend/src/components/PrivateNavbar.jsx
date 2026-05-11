@@ -1,15 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
-import { FaBell, FaSearch, FaUserCircle, FaChevronDown } from "react-icons/fa";
+import { FaBell, FaSearch, FaTimes, FaUserCircle, FaChevronDown, FaBars } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { getUnreadNotificationCount } from "../services/notificationService";
-import { useUser } from "../context/UserContext";
+import { useUser } from "../context/useUser";
 
 const MotionLink = motion(Link);
 
 export default function PrivateNavbar({ searchValue = "", onSearchChange, onSearch }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
   };
 
   return (
-    <nav className="sticky top-0 z-40 bg-[#F9F9F9]/90 backdrop-blur-md px-8 py-3 flex justify-between items-center border border-white/20 shadow-lg shadow-blue-400/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none">
+    <nav className="sticky top-0 z-40 bg-[#F9F9F9]/90 backdrop-blur-md px-4 md:px-8 py-3 flex justify-between items-center border border-white/20 shadow-lg shadow-blue-400/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none">
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
       <Link to="/dashboard" className="relative z-10">
         <img
@@ -95,7 +96,7 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
       </Link>
       </motion.div>
 
-      <div className="relative z-10 flex items-center gap-6 text-black text-lg">
+      <div className="hidden md:flex relative z-10 items-center gap-6 text-black text-lg">
         <PrivateNavLink to="/dashboard" label="Home" />
         <PrivateNavLink to="/dashboard/categories" label="Categories" />
         <PrivateNavLink to="/detect" label="Detect Fake News" />
@@ -117,18 +118,24 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
           />
           <motion.button
             type="button"
-            aria-label="Search"
-            onClick={() => onSearch?.()}
+            aria-label={searchValue ? "Clear search" : "Search"}
+            onClick={() => {
+              if (searchValue) {
+                onSearchChange?.("");
+              } else {
+                onSearch?.();
+              }
+            }}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-transparent text-blue-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.95 }}
           >
-            <FaSearch className="h-4 w-4" />
+            {searchValue ? <FaTimes className="h-4 w-4" /> : <FaSearch className="h-4 w-4" />}
           </motion.button>
         </div>
       </div>
 
-      <div className="relative z-10 flex items-center gap-3">
+      <div className="relative z-10 flex items-center gap-2 md:gap-3">
         <motion.div
           whileHover={{ y: -1 }}
           whileTap={{ scale: 0.96 }}
@@ -189,7 +196,7 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
                 />
               </div>
             )}
-            <span className="text-sm font-semibold">{user?.name || "User"}</span>
+            <span className="hidden md:block text-sm font-semibold">{user?.name || "User"}</span>
             <motion.div
               animate={{ rotate: profileDropdownOpen ? 180 : 0 }}
               transition={{ duration: 0.2 }}
@@ -233,15 +240,79 @@ export default function PrivateNavbar({ searchValue = "", onSearchChange, onSear
             </motion.button>
           </motion.div>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden flex items-center justify-center p-2 rounded-lg text-blue-700 bg-white/70 border border-blue-200 transition hover:bg-blue-50"
+        >
+          {mobileMenuOpen ? <FaTimes className="text-lg" /> : <FaBars className="text-lg" />}
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      <motion.div
+        initial={false}
+        animate={{
+          height: mobileMenuOpen ? "auto" : 0,
+          opacity: mobileMenuOpen ? 1 : 0,
+        }}
+        className={`absolute top-full left-0 w-full overflow-hidden bg-[#F9F9F9] border-b border-white/20 shadow-lg md:hidden ${
+          mobileMenuOpen ? "border-t" : ""
+        }`}
+      >
+        <div className="flex flex-col px-4 py-4 gap-4">
+          <div className="flex flex-col gap-2 text-black text-lg">
+            <PrivateNavLink to="/dashboard" label="Home" onClick={() => setMobileMenuOpen(false)} />
+            <PrivateNavLink to="/dashboard/categories" label="Categories" onClick={() => setMobileMenuOpen(false)} />
+            <PrivateNavLink to="/detect" label="Detect Fake News" onClick={() => setMobileMenuOpen(false)} />
+            <PrivateNavLink to="/analytics" label="Analytics" onClick={() => setMobileMenuOpen(false)} />
+            <PrivateNavLink to="/dashboard/watchlater" label="Watch later" onClick={() => setMobileMenuOpen(false)} />
+            <PrivateNavLink to="/dashboard/favorites" label="Favourites" onClick={() => setMobileMenuOpen(false)} />
+          </div>
+          <div className="flex items-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm shadow-slate-200/50 w-full">
+            <input
+              type="text"
+              placeholder="Search ..."
+              value={searchValue}
+              onChange={(event) => onSearchChange?.(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  onSearch?.();
+                  setMobileMenuOpen(false);
+                }
+              }}
+              className="w-full bg-transparent px-4 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400"
+            />
+            <motion.button
+              type="button"
+              aria-label={searchValue ? "Clear search" : "Search"}
+              onClick={() => {
+                if (searchValue) {
+                  onSearchChange?.("");
+                } else {
+                  onSearch?.();
+                  setMobileMenuOpen(false);
+                }
+              }}
+              className="flex h-9 w-12 items-center justify-center rounded-r-full border-l border-slate-200 bg-transparent text-blue-600 transition hover:bg-blue-50 hover:text-blue-700"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {searchValue ? <FaTimes className="h-4 w-4" /> : <FaSearch className="h-4 w-4" />}
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
     </nav>
   );
 }
 
-function PrivateNavLink({ to, label }) {
+function PrivateNavLink({ to, label, onClick }) {
   return (
     <MotionLink
       to={to}
+      onClick={onClick}
       className="relative px-2 py-1 transition-all duration-300 hover:text-blue-700 active:scale-95 hover:drop-shadow-md"
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.96 }}

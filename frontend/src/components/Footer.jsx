@@ -17,7 +17,7 @@ export default function Footer() {
     };
 
 return (
-    <footer className="bg-gradient-to-r from-blue-400 via-blue-300 to-blue-200 text-black px-10 py-12 mt-20 backdrop-blur-md bg-opacity-80 shadow-2xl">
+    <footer className="bg-gradient-to-r from-blue-400 via-blue-300 to-blue-200 text-black px-10 py-12 mt-0 backdrop-blur-md bg-opacity-80 shadow-2xl">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
 
             <div>

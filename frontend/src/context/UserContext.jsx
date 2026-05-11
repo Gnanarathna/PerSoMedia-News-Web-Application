@@ -1,7 +1,6 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { getCurrentUser } from "../services/authService";
-
-const UserContext = createContext();
+import { UserContext } from "./useUser";
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -29,12 +28,4 @@ export const UserProvider = ({ children }) => {
       {children}
     </UserContext.Provider>
   );
-};
-
-export const useUser = () => {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error("useUser must be used within UserProvider");
-  }
-  return context;
 };
