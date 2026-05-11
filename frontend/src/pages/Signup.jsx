@@ -86,7 +86,7 @@ export default function Signup() {
       <Motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white rounded-2xl p-8 w-[400px] shadow-2xl relative"
+        className="bg-white rounded-2xl p-6 sm:p-8 w-[90vw] max-w-[400px] shadow-2xl relative"
       >
         {/* Close */}
         <button
@@ -96,7 +96,7 @@ export default function Signup() {
           ✕
         </button>
 
-        <h2 className="text-3xl font-bold text-center mb-2">Sign Up</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2">Sign Up</h2>
         <p className="text-center text-gray-500 mb-6">Create your account to get started</p>
 
         <div className="mb-4 flex justify-center rounded-2xl bg-gradient-to-r from-slate-50 via-white to-slate-50 p-2 shadow-[0_10px_30px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70">

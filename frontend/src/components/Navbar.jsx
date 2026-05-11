@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { hasValidSessionToken } from "../utils/authToken";
+import { useState } from "react";
 
 export default function Navbar() {
     const isAuthenticated = hasValidSessionToken();
+    const [menuOpen, setMenuOpen] = useState(false);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -18,7 +20,7 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="sticky top-0 z-50 bg-[#F9F9F9]/90 backdrop-blur-md px-8 py-3 flex justify-between items-center border border-white/20 shadow-lg shadow-blue-400/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none">
+        <nav className="sticky top-0 z-50 bg-[#F9F9F9]/90 backdrop-blur-md px-8 py-3 flex flex-wrap justify-between items-center border border-white/20 shadow-lg shadow-blue-400/20 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-white/5 before:to-transparent before:pointer-events-none">
             
             <button onClick={handleLogoClick} className="cursor-pointer hover:opacity-80 transition">
                 <img 
@@ -28,7 +30,8 @@ export default function Navbar() {
                 />
             </button>
 
-            <div className="flex items-center gap-6 text-black text-lg">
+            {/* Desktop nav links */}
+            <div className="hidden md:flex items-center gap-6 text-black text-lg">
                 <NavLink to="/" label="Home" onHomeClick={handleLogoClick} />
                 {!isAuthenticated && <NavLink to="#categories" label="Categories" isScroll />}
                 {!isAuthenticated && <NavLink to="#about" label="About" isScroll />}
@@ -43,6 +46,33 @@ export default function Navbar() {
                     </button>
                 )}
             </div>
+
+            {/* Mobile hamburger button */}
+            <button
+                className="md:hidden text-black text-2xl px-2 py-1 transition-all duration-300 hover:text-blue-700 active:scale-95"
+                onClick={() => setMenuOpen(!menuOpen)}
+            >
+                {menuOpen ? "✕" : "☰"}
+            </button>
+
+            {/* Mobile dropdown */}
+            {menuOpen && (
+                <div className="w-full md:hidden flex flex-col gap-4 text-black text-lg px-2 py-4 border-t border-white/20">
+                    <NavLink to="/" label="Home" onHomeClick={() => { handleLogoClick(); setMenuOpen(false); }} />
+                    {!isAuthenticated && <NavLink to="#categories" label="Categories" isScroll />}
+                    {!isAuthenticated && <NavLink to="#about" label="About" isScroll />}
+                    {!isAuthenticated && <NavLink to="/login" label="Login" />}
+                    {!isAuthenticated && <NavLink to="/signup" label="Sign Up" isButton />}
+                    {isAuthenticated && (
+                        <button
+                            onClick={handleLogout}
+                            className="rounded-xl border border-red-300 bg-red-50 px-4 py-1 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                        >
+                            Logout
+                        </button>
+                    )}
+                </div>
+            )}
         </nav>
     );
 }

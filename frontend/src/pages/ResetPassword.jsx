@@ -16,11 +16,11 @@ export default function ResetPassword() {
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
           <Motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-white p-8 shadow-lg text-center max-w-md"
+            className="rounded-2xl bg-white p-6 sm:p-8 shadow-lg text-center w-full max-w-md"
           >
             <div className="mb-4 text-4xl text-red-500">✗</div>
             <h2 className="mb-2 text-2xl font-bold text-slate-800">Invalid Link</h2>
@@ -75,11 +75,11 @@ export default function ResetPassword() {
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
           <Motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-white p-8 shadow-lg text-center max-w-md"
+            className="rounded-2xl bg-white p-6 sm:p-8 shadow-lg text-center w-full max-w-md"
           >
             <div className="mb-4 text-4xl text-green-500">✓</div>
             <h2 className="mb-2 text-2xl font-bold text-slate-800">Password Reset</h2>
@@ -102,13 +102,13 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
         <Motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md rounded-2xl border border-blue-200 bg-white p-8 shadow-lg"
+          className="w-full max-w-md rounded-2xl border border-blue-200 bg-white p-6 sm:p-8 shadow-lg"
         >
-          <h1 className="mb-2 text-3xl font-bold text-slate-800">Reset Password</h1>
+          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-slate-800">Reset Password</h1>
           <p className="mb-6 text-slate-600">
             Enter your new password below.
           </p>

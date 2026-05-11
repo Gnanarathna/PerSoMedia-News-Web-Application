@@ -190,7 +190,7 @@ export default function Dashboard({ view = "home" }) {
       {currentView.showNewsGrid ? (
         <>
           <Motion.section
-            className="mx-10 mt-8 px-2 py-4 text-center text-slate-800"
+            className="mx-4 sm:mx-10 mt-8 px-2 py-4 text-center text-slate-800"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, ease: "easeOut" }}
@@ -226,7 +226,7 @@ export default function Dashboard({ view = "home" }) {
 
           {/* News Grid */}
           {!loading && !error && filteredNews.length > 0 && (
-            <div className="grid grid-cols-4 gap-10 px-16 mt-12">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-10 px-4 sm:px-8 lg:px-16 mt-12">
               {visibleNews.map((item, index) => (
                 <Motion.div
                   key={item._id || index}
@@ -281,7 +281,7 @@ export default function Dashboard({ view = "home" }) {
         </>
       ) : (
         <Motion.div
-          className="mx-10 mt-6 rounded-xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm"
+          className="mx-4 sm:mx-10 mt-6 rounded-xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
