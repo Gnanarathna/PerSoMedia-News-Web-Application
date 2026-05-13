@@ -1,0 +1,1 @@
+from .routes import fake_detection_bp
