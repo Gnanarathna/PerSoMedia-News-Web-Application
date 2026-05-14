@@ -24,7 +24,7 @@ export default function Navbar() {
             
             <button onClick={handleLogoClick} className="cursor-pointer hover:opacity-80 transition">
                 <img 
-                    src="public/images/PerSoMedia_logo.png" 
+                    src="/images/PerSoMedia_Logo.png" 
                     alt="PerSoMedia News" 
                     className="h-10 w-auto drop-shadow-lg" 
                 />
